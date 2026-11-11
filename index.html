@@ -133,15 +133,32 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .f .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;font-size:14px;z-index:5;max-width:calc(100vw - 32px)}
 
+.hr{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.btn.bad{color:var(--bad)}
+.leg{margin-top:14px}
+.leg h3{font:600 14px var(--font-d);margin:0}
+.leg h3 span{color:var(--muted);font-weight:500}
+.b{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);margin-top:8px}
+.b .big{font:600 19px var(--font-d)}
+.b .big small{display:block;font:500 11px var(--font-b);color:var(--muted)}
+.b.rec{border-color:var(--accent)}
+.b.dim{opacity:.45}
+.b .t{overflow-wrap:anywhere}
+.b .t small{display:block;color:var(--muted);font-size:12.5px}
+.tag.late{background:rgba(255,122,122,.14);color:var(--bad)}
+.tag.rec{background:var(--accent);color:#07101f}
+.note{color:var(--muted);font-size:12px;margin:12px 0 0}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .col,.side{display:contents}
-  .wxc{order:1}.sch{order:2}.chk{order:3}.cal{order:4}
+  .wxc{order:1}.busc{order:2}.sch{order:3}.chk{order:4}.cal{order:5}
 }
 @media (max-width:480px){
   .ev{grid-template-columns:58px minmax(0,1fr)}
   .ev-side{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start}
   .wx{grid-template-columns:minmax(0,1fr)}
+  .b{grid-template-columns:58px minmax(0,1fr)}
+  .b .tag{grid-column:2;justify-self:start}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -153,13 +170,18 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
       <p class="hello" id="hello"></p>
       <h1 id="today"></h1>
     </div>
-    <div class="clock num" id="clock"></div>
+    <div class="hr"><button class="btn ghost" id="syncBtn" type="button">Activar sincronización</button><div class="clock num" id="clock"></div></div>
   </header>
 
   <div class="col">
     <section class="card wxc" aria-label="Tiempo">
       <div class="row between" style="margin-bottom:12px"><h2>Tiempo · Valencia</h2><button class="btn ghost" id="wxRefresh" type="button">Actualizar</button></div>
       <div id="wx"><p class="wx-msg">Cargando el tiempo…</p></div>
+    </section>
+
+    <section class="card busc" aria-label="Transporte">
+      <div class="row between" style="flex-wrap:wrap;margin-bottom:4px"><h2>Transporte · Metrobús 113A / 114A</h2><button class="btn ghost" id="busMode" type="button"></button></div>
+      <div id="bus"></div>
     </section>
 
     <section class="card sch" aria-label="Horario">
@@ -208,6 +230,17 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
     </section>
   </div>
 </div>
+
+<dialog id="sdlg">
+  <form class="f" id="sForm" method="dialog">
+    <h3>Sincronización</h3>
+    <p class="wx-msg" style="margin:0">Guarda tareas y eventos en tu repositorio privado de GitHub para verlos igual en el móvil y el PC. Pega el mismo token en cada dispositivo.</p>
+    <label>Repositorio<input class="in" id="sRepo" placeholder="usuario/repositorio" autocomplete="off"></label>
+    <label>Token de GitHub<input class="in" id="sToken" type="password" autocomplete="off" placeholder="github_pat_..."></label>
+    <p class="wx-msg" style="margin:0">Crear token: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Repositorio: solo aviso-diario. Permiso: Contents → Read and write.</p>
+    <div class="acts"><button class="btn ghost" type="button" id="sOff">Desconectar</button><button class="btn" type="button" id="sCancel">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>
+</dialog>
 
 <dialog id="dlg">
   <form class="f" id="evForm" method="dialog">
@@ -265,6 +298,7 @@ index();
 function customOn(date){
   const out=[];
   for(const c of custom){
+    if(c.del)continue;
     let hit=false;
     if(date===c.date)hit=true;
     else if(c.rep&&date>c.date&&(!c.until||date<=c.until)){
@@ -319,7 +353,7 @@ function renderDay(){
 }
 $('#events').addEventListener('click',e=>{
   const b=e.target.closest('[data-del]');if(!b)return;
-  custom=custom.filter(c=>c.id!==b.dataset.del);store.set('pv_events',custom);renderAll();
+  const c=custom.find(x=>x.id===b.dataset.del);if(c){c.del=true;c.u=Date.now()}saveEvents();renderAll();
 });
 
 /* ---------- calendario ---------- */
@@ -328,7 +362,7 @@ function renderCal(){
   $('#monthTitle').textContent=cap(new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' '));
   const first=new Date(y,m-1,1),lead=(first.getDay()+6)%7,today=iso(new Date());
   const start=new Date(y,m-1,1-lead);
-  const taskDates=new Set(tasks.filter(t=>!t.done&&t.date).map(t=>t.date));
+  const taskDates=new Set(tasks.filter(t=>!t.del&&!t.done&&t.date).map(t=>t.date));
   let h=['L','M','X','J','V','S','D'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<42;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);const s=iso(d);
@@ -357,10 +391,11 @@ $('#goToday').onclick=()=>goDay(iso(new Date()));
 /* ---------- checklist ---------- */
 function renderTasks(){
   const today=iso(new Date());
-  const list=[...tasks].sort((a,b)=>a.done-b.done||((a.date||'9')<(b.date||'9')?-1:(a.date||'9')>(b.date||'9')?1:0));
-  const done=tasks.filter(t=>t.done).length;
-  $('#count').textContent=`${done}/${tasks.length}`;
-  $('#progBar').style.width=tasks.length?`${Math.round(done/tasks.length*100)}%`:'0';
+  const live=tasks.filter(t=>!t.del);
+  const list=[...live].sort((a,b)=>a.done-b.done||((a.date||'9')<(b.date||'9')?-1:(a.date||'9')>(b.date||'9')?1:0));
+  const done=live.filter(t=>t.done).length;
+  $('#count').textContent=`${done}/${live.length}`;
+  $('#progBar').style.width=live.length?`${Math.round(done/live.length*100)}%`:'0';
   $('#clearDone').hidden=!done;
   if(!list.length){$('#tasks').innerHTML='<li class="empty">Sin tareas. Añade la primera arriba.</li>';return}
   $('#tasks').innerHTML=list.map(t=>{
@@ -375,19 +410,19 @@ function renderTasks(){
 }
 $('#tasks').addEventListener('change',e=>{
   const id=e.target.dataset.t;if(!id)return;
-  const t=tasks.find(x=>x.id===id);if(t){t.done=e.target.checked;store.set('pv_tasks',tasks);renderTasks();renderCal()}
+  const t=tasks.find(x=>x.id===id);if(t){t.done=e.target.checked;t.u=Date.now();saveTasks();renderTasks();renderCal()}
 });
 $('#tasks').addEventListener('click',e=>{
   const b=e.target.closest('[data-rm]');if(!b)return;
-  tasks=tasks.filter(t=>t.id!==b.dataset.rm);store.set('pv_tasks',tasks);renderTasks();renderCal();
+  const t=tasks.find(x=>x.id===b.dataset.rm);if(t){t.del=true;t.u=Date.now()}saveTasks();renderTasks();renderCal();
 });
 $('#taskForm').addEventListener('submit',e=>{
   e.preventDefault();
   const text=$('#taskText').value.trim();if(!text)return;
-  tasks.push({id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,done:false,date:$('#taskDate').value});
-  store.set('pv_tasks',tasks);$('#taskText').value='';$('#taskDate').value='';renderTasks();renderCal();
+  tasks.push({id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,done:false,date:$('#taskDate').value,u:Date.now()});
+  saveTasks();$('#taskText').value='';$('#taskDate').value='';renderTasks();renderCal();
 });
-$('#clearDone').onclick=()=>{tasks=tasks.filter(t=>!t.done);store.set('pv_tasks',tasks);renderTasks();renderCal()};
+$('#clearDone').onclick=()=>{tasks.forEach(t=>{if(t.done&&!t.del){t.del=true;t.u=Date.now()}});saveTasks();renderTasks();renderCal()};
 
 /* ---------- nuevo evento ---------- */
 const dlg=$('#dlg');
@@ -401,8 +436,8 @@ $('#evForm').addEventListener('submit',e=>{
   e.preventDefault();
   const s=$('#fStart').value,f=$('#fEnd').value;
   if(mins(f)<=mins(s)){toast('La hora de fin debe ser posterior al inicio');return}
-  custom.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:$('#fTitle').value.trim(),date:$('#fDate').value,start:s,end:f,place:$('#fPlace').value.trim(),rep:$('#fRep').value,until:$('#fUntil').value});
-  store.set('pv_events',custom);
+  custom.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:$('#fTitle').value.trim(),date:$('#fDate').value,start:s,end:f,place:$('#fPlace').value.trim(),rep:$('#fRep').value,until:$('#fUntil').value,u:Date.now()});
+  saveEvents();
   sel=$('#fDate').value;viewMonth=sel.slice(0,7);
   dlg.close();renderAll();toast('Evento guardado');
 });
@@ -515,11 +550,125 @@ async function loadWx(manual){
 }
 $('#wxRefresh').onclick=()=>loadWx(true);
 
+/* ---------- sincronización (GitHub) ---------- */
+const SY={token:store.get('pv_token',''),repo:store.get('pv_repo','ZileOne/aviso-diario'),timer:null,busy:false};
+const saveTasks=()=>{store.set('pv_tasks',tasks);queueSync()};
+const saveEvents=()=>{store.set('pv_events',custom);queueSync()};
+function setSync(msg,bad){const b=$('#syncBtn');b.textContent=msg;b.classList.toggle('bad',!!bad)}
+function queueSync(){if(!SY.token)return;clearTimeout(SY.timer);SY.timer=setTimeout(sync,1200)}
+const byId=a=>[...a].sort((x,y)=>x.id<y.id?-1:x.id>y.id?1:0);
+const sameList=(x,y)=>JSON.stringify(byId(x))===JSON.stringify(byId(y));
+function mergeList(a,b){
+  const m=new Map();
+  for(const x of a.concat(b)){const o=m.get(x.id);if(!o||(x.u||0)>(o.u||0))m.set(x.id,x)}
+  const lim=Date.now()-60*864e5;
+  return [...m.values()].filter(x=>!(x.del&&(x.u||0)<lim));
+}
+const ghUrl=()=>`https://api.github.com/repos/${SY.repo}/contents/datos.json`;
+const ghHead=()=>({Authorization:'Bearer '+SY.token,Accept:'application/vnd.github+json'});
+async function ghGet(){
+  const r=await fetch(ghUrl()+'?t='+Date.now(),{headers:ghHead(),cache:'no-store'});
+  if(r.status===404)return {sha:null,data:{tasks:[],events:[]}};
+  if(!r.ok)throw {status:r.status};
+  const j=await r.json();
+  const bin=atob(j.content.replace(/\s/g,''));
+  return {sha:j.sha,data:JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))))};
+}
+async function ghPut(data,sha){
+  const bytes=new TextEncoder().encode(JSON.stringify(data,null,1));let s='';bytes.forEach(b=>{s+=String.fromCharCode(b)});
+  const r=await fetch(ghUrl(),{method:'PUT',headers:{...ghHead(),'Content-Type':'application/json'},body:JSON.stringify({message:'sync panel',content:btoa(s),...(sha?{sha}:{})})});
+  if(!r.ok)throw {status:r.status};
+}
+async function sync(){
+  if(!SY.token||SY.busy)return;
+  SY.busy=true;setSync('Sincronizando…');
+  try{
+    for(let n=0;n<3;n++){
+      const r=await ghGet();
+      const rt=r.data.tasks||[],re=r.data.events||[];
+      const t=mergeList(tasks,rt),e=mergeList(custom,re);
+      const changed=!sameList(t,tasks)||!sameList(e,custom);
+      tasks=t;custom=e;
+      if(changed){store.set('pv_tasks',tasks);store.set('pv_events',custom);renderAll()}
+      if(sameList(t,rt)&&sameList(e,re))break;
+      try{await ghPut({tasks:byId(t),events:byId(e)},r.sha);break}
+      catch(er){if(er.status!==409&&er.status!==422)throw er}
+    }
+    setSync('Sincronizado '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
+  }catch(er){
+    setSync(er.status===401||er.status===403?'Token no válido':er.status===404?'Repo no encontrado':'Sin conexión',true);
+  }
+  SY.busy=false;
+}
+const sdlg=$('#sdlg');
+$('#syncBtn').onclick=()=>{$('#sToken').value=SY.token;$('#sRepo').value=SY.repo;if(sdlg.showModal)sdlg.showModal();else sdlg.setAttribute('open','')};
+$('#sCancel').onclick=()=>sdlg.close();
+$('#sOff').onclick=()=>{SY.token='';store.set('pv_token','');sdlg.close();setSync('Activar sincronización')};
+$('#sForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  SY.token=$('#sToken').value.trim();SY.repo=$('#sRepo').value.trim()||'ZileOne/aviso-diario';
+  store.set('pv_token',SY.token);store.set('pv_repo',SY.repo);sdlg.close();
+  if(SY.token)sync();else setSync('Activar sincronización');
+});
+
+/* ---------- transporte (Metrobús 113A / 114A) ---------- */
+const BUS={"lectivo":{"ida":[["113A","06:50","07:34"],["114A","07:12","08:03"],["114A","08:06","08:55"],["114A","08:56","09:50"],["114A","09:31","10:20"],["114A","13:00","13:49"],["114A","13:20","14:09"],["113A","14:19","15:05"],["114A","17:28","18:14"],["113A","19:43","20:20"],["114A","21:47","22:24"]],"vuelta":[["113A","07:37","08:01"],["114A","08:17","08:43"],["114A","09:23","09:49"],["113A","12:49","13:20"],["114A","14:24","14:49"],["113A","15:18","15:44"],["114A","16:14","16:39"],["114A","18:29","18:57"],["113A","20:33","20:57"],["114A","20:42","21:07"],["114A","21:37","22:02"]]},"nolectivo":{"ida":[["113A","06:50","07:30"],["114A","07:03","07:44"],["114A","08:50","09:35"],["113A","09:20","10:00"],["113A","12:00","12:40"],["114A","13:02","13:43"],["113A","14:33","15:16"],["114A","15:42","16:22"],["114A","16:02","16:42"],["113A","18:48","19:23"],["114A","20:07","20:45"],["114A","21:32","22:09"]],"vuelta":[["113A","07:42","08:06"],["114A","09:10","09:36"],["113A","10:14","10:45"],["114A","11:26","11:57"],["113A","12:51","13:15"],["114A","13:39","14:04"],["114A","14:44","15:09"],["114A","15:29","15:54"],["113A","15:33","15:59"],["114A","16:40","17:04"],["114A","17:09","17:35"],["114A","18:34","19:02"],["113A","19:43","20:08"],["114A","21:38","22:02"]]},"sabado":{"ida":[["114A","09:08","09:59"],["114A","10:28","11:19"],["113A","10:50","11:30"],["114A","11:53","12:44"],["114A","13:18","14:09"],["114A","14:23","15:14"],["114A","16:33","17:24"],["114A","17:33","18:24"],["114A","19:21","20:12"],["114A","20:18","21:09"],["113A","21:05","21:45"],["114A","21:29","22:20"]],"vuelta":[["114A","","08:20"],["114A","","09:25"],["113A","","09:45"],["114A","","10:52"],["114A","","12:13"],["114A","","13:24"],["114A","","15:57"],["114A","","16:48"],["114A","","18:19"],["114A","","19:20"],["113A","","20:00"],["114A","","20:47"]]},"festivo":{"ida":[["114A","09:40","10:23"],["114A","11:57","12:40"],["114A","16:52","17:35"],["114A","19:12","19:55"],["113A","19:30","20:10"],["114A","21:32","22:19"]],"vuelta":[["114A","","08:42"],["114A","","11:13"],["114A","","16:07"],["114A","","18:25"],["114A","","20:38"],["113A","","20:45"]]}};
+const CFG={casaParada:3,viajeIda:28,paradaClase:7,claseParada:7,paradaCasa:3,offsetCV:3,viajeVueltaAprox:23,margen:5};
+const FESTIVOS=new Set(['2026-12-08','2026-12-25','2027-01-01','2027-01-06','2027-03-19','2027-03-26','2027-03-29','2027-06-24']);
+const NOLECT=[['2026-12-23','2027-01-07'],['2027-03-25','2027-04-05'],['2027-06-23','2027-09-08']];
+const KIND_LABEL={lectivo:'Lectivo',nolectivo:'No lectivo',sabado:'Sábado',festivo:'Domingo o festivo'};
+const hm=m=>`${p2(Math.floor(m/60))}:${p2(m%60)}`;
+function dayKind(date){
+  const o=store.get('pv_lect','auto'),w=fromISO(date).getDay();
+  if(w===0||FESTIVOS.has(date))return 'festivo';
+  if(w===6)return 'sabado';
+  if(o==='lectivo'||o==='nolectivo')return o;
+  return NOLECT.some(r=>date>=r[0]&&date<=r[1])?'nolectivo':'lectivo';
+}
+$('#busMode').onclick=()=>{
+  const o=store.get('pv_lect','auto');
+  store.set('pv_lect',o==='auto'?'lectivo':o==='lectivo'?'nolectivo':'auto');renderBus();
+};
+function renderBus(){
+  const kind=dayKind(sel),T=BUS[kind],o=store.get('pv_lect','auto'),wd=fromISO(sel).getDay();
+  $('#busMode').textContent='Horario: '+KIND_LABEL[kind]+((o==='auto'||wd===0||wd===6)?' (auto)':'');
+  const cls=eventsOn(sel).filter(e=>!e.custom);
+  if(!cls.length){$('#bus').innerHTML='<p class="wx-msg">Sin clases este día: no hace falta coger el bus.</p>';return}
+  const first=Math.min(...cls.map(e=>mins(e.start))),last=Math.max(...cls.map(e=>mins(e.end)));
+  const n=new Date(),nowM=n.getHours()*60+n.getMinutes(),isToday=sel===iso(n);
+  /* ida */
+  const deadline=first-CFG.paradaClase-CFG.margen-CFG.viajeIda;
+  const ida=T.ida.map(r=>({l:r[0],dep:mins(r[1])})).sort((a,b)=>a.dep-b.dep);
+  let k=-1;ida.forEach((b,i)=>{if(b.dep<=deadline)k=i});
+  const from=k>=0?Math.max(0,k-1):0,to=k>=0?k+2:2;
+  const idaH=ida.slice(from,to).map((b,j)=>{
+    const i=from+j,casa=b.dep-CFG.casaParada,cat=b.dep+CFG.viajeIda,clase=cat+CFG.paradaClase;
+    const late=clase>first,past=isToday&&casa<nowM;
+    return `<div class="b${i===k?' rec':''}${past?' dim':''}"><div class="big num">${hm(casa)}<small>sal de casa</small></div>
+      <div class="t">Bus ${b.l} · ${hm(b.dep)} País Valencià 23<small class="num">Catalunya ${hm(cat)} · en clase ${hm(clase)}</small></div>
+      ${i===k?'<span class="tag rec">RECOMENDADO</span>':late?'<span class="tag late">LLEGAS TARDE</span>':''}</div>`;
+  }).join('');
+  /* vuelta */
+  const base=Math.max(last+CFG.claseParada,isToday?nowM:0);
+  const vu=T.vuelta.map(r=>{const pv=mins(r[2]);return {l:r[0],cv:r[1]?mins(r[1])+CFG.offsetCV:pv-CFG.viajeVueltaAprox,pv}})
+    .sort((a,b)=>a.cv-b.cv).filter(b=>b.cv>=base).slice(0,3);
+  const vuH=vu.length?vu.map((b,i)=>`<div class="b${i===0?' rec':''}"><div class="big num">${hm(b.cv)}<small>sale de la UPV</small></div>
+      <div class="t">Bus ${b.l} · Camí de Vera - Acceso S UPV<small class="num">País Valencià 14 ${hm(b.pv)} · en casa ${hm(b.pv+CFG.paradaCasa)}</small></div>
+      ${i===0?'<span class="tag rec">SIGUIENTE</span>':''}</div>`).join(''):'<p class="wx-msg">No quedan más buses ese día.</p>';
+  $('#bus').innerHTML=`<div class="leg"><h3>Ida <span>· primera clase ${hm(first)}</span></h3>${idaH||'<p class="wx-msg">Sin buses.</p>'}</div>
+    <div class="leg"><h3>Vuelta <span>· sales de clase ${hm(last)}</span></h3>${vuH}</div>
+    <p class="note">Horarios oficiales del PDF de octubre 2026. Calculado con ${CFG.viajeIda} min de viaje a Catalunya, ${CFG.paradaClase} min andando parada-clase y 5 min de margen. La hora en Camí de Vera es estimada (3 min después de Blasco Ibáñez - Facultat de Geografia).</p>`;
+}
+
 /* ---------- arranque ---------- */
-function renderAll(){renderDay();renderCal();renderTasks()}
+function renderAll(){renderDay();renderBus();renderCal();renderTasks()}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 tickHeader();renderAll();loadWx(false);
-setInterval(()=>{tickHeader();if(sel===iso(new Date()))renderDay()},30000);
+if(SY.token)sync();else setSync('Activar sincronización');
+setInterval(sync,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();loadWx(false)}});
+window.addEventListener('online',sync);
+setInterval(()=>{tickHeader();if(sel===iso(new Date())){renderDay();renderBus()}},30000);
 setInterval(()=>loadWx(true),30*60*1000);
 </script>
 </body>
