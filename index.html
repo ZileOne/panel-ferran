@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>Panel de vida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: cabecera + 2 columnas (tiempo + horario | calendario + checklist); una columna en móvil */
+:root{
+  --bg:#0d1117; --surface:#151b24; --surface2:#1b2330; --line:#252f3e;
+  --fg:#e6ebf2; --muted:#8a97a9; --accent:#6ea8ff; --accent-soft:rgba(110,168,255,.14);
+  --now:#ffb454; --now-soft:rgba(255,180,84,.14); --ok:#5fd0a0; --bad:#ff7a7a;
+  --font-d:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+  --font-b:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font-b);
+  padding-block:max(20px,env(safe-area-inset-top,0px)) max(32px,env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.app{max-width:1180px;margin:0 auto;display:grid;gap:16px;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}
+header{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:4px}
+h1{font:700 clamp(26px,5vw,38px)/1.1 var(--font-d);margin:0;letter-spacing:-.01em}
+.hello{color:var(--muted);margin:0 0 4px;font-size:14px}
+.clock{font:600 clamp(26px,5vw,38px)/1 var(--font-d);color:var(--accent)}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.card h2{font:600 13px var(--font-d);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.row{display:flex;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.btn{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:14px;line-height:1.2}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#07101f;font-weight:600}
+.btn.icon{padding:7px 10px;min-width:36px}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--fg);border-color:var(--line)}
+
+/* tiempo */
+.wx{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 20px;align-items:center}
+.wx-now{display:flex;align-items:center;gap:12px}
+.wx-now svg{width:52px;height:52px;color:var(--now);flex:none}
+.wx-temp{font:700 46px/1 var(--font-d)}
+.wx-desc{color:var(--muted);font-size:13px}
+.wx-cmp{font:600 clamp(19px,3.4vw,24px)/1.2 var(--font-d);text-wrap:balance}
+.wx-sub{color:var(--muted);font-size:13px;margin-top:4px}
+.wx-alert{grid-column:1/-1;background:var(--now-soft);color:var(--now);border-radius:10px;padding:8px 12px;font-size:14px}
+.hours{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.hour{text-align:center;font-size:13px;color:var(--muted)}
+.hour b{display:block;color:var(--fg);font:600 17px var(--font-d)}
+.hour i{font-style:normal;color:var(--accent);font-size:12px}
+.wx-msg{color:var(--muted);font-size:14px;margin:8px 0 0}
+
+/* horario */
+.day-nav{gap:6px}
+.day-title{font:600 18px var(--font-d);margin:0}
+.summary{color:var(--muted);font-size:13px;margin:2px 0 0}
+.list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ev{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;position:relative;overflow:hidden}
+.ev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--accent))}
+.ev-t{font-size:13px;color:var(--muted);line-height:1.3;padding-left:4px}
+.ev-t b{display:block;color:var(--fg);font:600 15px var(--font-d)}
+.ev-n{font-weight:500;overflow-wrap:anywhere}
+.ev-p{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.tag{font:600 11px var(--font-d);letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.tag.now{background:var(--now);color:#241600}
+.tag.next{background:var(--now-soft);color:var(--now)}
+.tag.mine{background:rgba(95,208,160,.14);color:var(--ok)}
+.ev.past{opacity:.45}
+.ev.live{border-color:var(--now)}
+.bar{position:absolute;left:4px;right:0;bottom:0;height:3px;background:transparent}
+.bar i{display:block;height:100%;background:var(--now)}
+.ev-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.x{background:none;border:0;color:var(--muted);padding:2px 6px;border-radius:6px;font-size:16px;line-height:1}
+.x:hover{color:var(--bad)}
+.empty{color:var(--muted);padding:18px 4px 6px;text-align:center}
+
+/* calendario */
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cal-title{font:600 16px var(--font-d);margin:0}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-top:10px;text-align:center}
+.dow{font-size:11px;color:var(--muted);padding:4px 0;letter-spacing:.06em}
+.d{aspect-ratio:1/1;border:0;background:none;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:14px;padding:0;max-width:100%}
+.d:hover{background:var(--surface2)}
+.d.out{color:#4d596a}
+.d.we{color:var(--muted)}
+.d.today{box-shadow:inset 0 0 0 1px var(--now)}
+.d.sel{background:var(--accent);color:#07101f;font-weight:600}
+.dots{display:flex;gap:3px;height:5px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.dots i.t{background:var(--now)}
+.d.sel .dots i{background:#07101f}
+
+/* checklist */
+.prog{height:6px;background:var(--surface2);border-radius:999px;overflow:hidden;margin:10px 0 12px}
+.prog i{display:block;height:100%;background:var(--ok);width:0;transition:width .25s}
+.add{display:flex;gap:8px;flex-wrap:wrap}
+.in{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;width:100%}
+.in:focus{outline:none;border-color:var(--accent)}
+.add .in.txt{flex:1 1 160px;width:auto}
+.add .in.dt{flex:0 1 150px;width:auto}
+.tasks{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 4px;border-radius:8px}
+.task:hover{background:var(--surface2)}
+.task input{appearance:none;width:20px;height:20px;border:2px solid var(--muted);border-radius:6px;margin:0;display:grid;place-content:center;cursor:pointer}
+.task input:checked{background:var(--ok);border-color:var(--ok)}
+.task input:checked::after{content:"";width:5px;height:10px;border:solid #07130d;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.task span{overflow-wrap:anywhere}
+.task.done span{text-decoration:line-through;color:var(--muted)}
+.due{font-size:12px;color:var(--muted);white-space:nowrap}
+.due.hoy{color:var(--now)}.due.venc{color:var(--bad)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--muted);font-size:13px}
+
+/* diálogo */
+dialog{background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:20px;width:min(440px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(3,6,10,.7)}
+dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
+.f{display:grid;gap:12px}
+.f label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.f .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;font-size:14px;z-index:5;max-width:calc(100vw - 32px)}
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .col,.side{display:contents}
+  .wxc{order:1}.sch{order:2}.chk{order:3}.cal{order:4}
+}
+@media (max-width:480px){
+  .ev{grid-template-columns:58px minmax(0,1fr)}
+  .ev-side{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start}
+  .wx{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <p class="hello" id="hello"></p>
+      <h1 id="today"></h1>
+    </div>
+    <div class="clock num" id="clock"></div>
+  </header>
+
+  <div class="col">
+    <section class="card wxc" aria-label="Tiempo">
+      <div class="row between" style="margin-bottom:12px"><h2>Tiempo · Valencia</h2><button class="btn ghost" id="wxRefresh" type="button">Actualizar</button></div>
+      <div id="wx"><p class="wx-msg">Cargando el tiempo…</p></div>
+    </section>
+
+    <section class="card sch" aria-label="Horario">
+      <div class="row between" style="flex-wrap:wrap">
+        <div>
+          <h2 id="dayLabel">Horario</h2>
+          <p class="day-title" id="dayTitle"></p>
+          <p class="summary" id="daySummary"></p>
+        </div>
+        <div class="row day-nav">
+          <button class="btn icon" id="prevDay" type="button" aria-label="Día anterior">‹</button>
+          <button class="btn" id="goToday" type="button">Hoy</button>
+          <button class="btn icon" id="nextDay" type="button" aria-label="Día siguiente">›</button>
+          <button class="btn primary" id="addEv" type="button">+ Evento</button>
+        </div>
+      </div>
+      <ul class="list" id="events"></ul>
+    </section>
+  </div>
+
+  <div class="side">
+    <section class="card cal" aria-label="Calendario">
+      <div class="cal-head">
+        <button class="btn icon" id="prevM" type="button" aria-label="Mes anterior">‹</button>
+        <p class="cal-title" id="monthTitle"></p>
+        <button class="btn icon" id="nextM" type="button" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="foot" style="margin-top:12px">
+        <span id="calInfo"></span>
+        <span class="row"><button class="btn ghost" id="importBtn" type="button">Importar .ics</button><button class="btn ghost" id="resetBtn" type="button" hidden>Horario original</button></span>
+      </div>
+      <input type="file" id="icsFile" accept=".ics,text/calendar" hidden>
+    </section>
+
+    <section class="card chk" aria-label="Checklist">
+      <div class="row between"><h2>Checklist</h2><span class="num" id="count" style="color:var(--muted);font-size:13px"></span></div>
+      <div class="prog"><i id="progBar"></i></div>
+      <form class="add" id="taskForm" autocomplete="off">
+        <input class="in txt" id="taskText" placeholder="Nueva tarea" aria-label="Nueva tarea" required>
+        <input class="in dt" id="taskDate" type="date" aria-label="Fecha límite (opcional)">
+        <button class="btn primary" type="submit">Añadir</button>
+      </form>
+      <ul class="tasks" id="tasks"></ul>
+      <div class="foot"><span></span><button class="btn ghost" id="clearDone" type="button">Borrar hechas</button></div>
+    </section>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <form class="f" id="evForm" method="dialog">
+    <h3>Nuevo evento</h3>
+    <label>Título<input class="in" id="fTitle" required placeholder="Ej: Reunión de grupo"></label>
+    <label>Fecha<input class="in" id="fDate" type="date" required></label>
+    <div class="two">
+      <label>Inicio<input class="in" id="fStart" type="time" required value="16:00"></label>
+      <label>Fin<input class="in" id="fEnd" type="time" required value="17:00"></label>
+    </div>
+    <label>Lugar (opcional)<input class="in" id="fPlace" placeholder="Biblioteca, Aula…"></label>
+    <div class="two">
+      <label>Repetir<select class="in" id="fRep"><option value="">No se repite</option><option value="d">Cada día</option><option value="w">Cada semana</option></select></label>
+      <label>Hasta<input class="in" id="fUntil" type="date"></label>
+    </div>
+    <div class="acts"><button class="btn" type="button" id="fCancel">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>
+</dialog>
+
+<script>
+const BASE_DATA = {"subs":{"IIP":{"n":"Introducción a la informática y a la programación","c":"#B9A899"},"TCO":{"n":"Tecnología de computadores","c":"#89BBBC"},"FFI":{"n":"Fundamentos Físicos de la Informática","c":"#CB8ABA"},"AMA":{"n":"Análisis matemático","c":"#B98B9C"},"MAD":{"n":"Matemática discreta","c":"#89BCBB"},"FCO":{"n":"Fundamentos de computadores","c":"#AC9CBB"},"ALG":{"n":"Algebra","c":"#BB9CCC"},"EST":{"n":"Estadística","c":"#ACC9BC"},"FOE":{"n":"Fundamentos de organización de empresas","c":"#CCACC9"},"PRG":{"n":"Programación","c":"#B89AB9"},"IPC":{"n":"Interfaces persona computador","c":"#98B9A9"},"DYP":{"n":"Deontología y profesionalismo","c":"#9ABACA"},"FSO":{"n":"Fundamentos de sistemas operativos","c":"#9CC898"},"ETC":{"n":"Estructura de computadores","c":"#ABA8AA"},"TAL":{"n":"Teoría de autómatas y lenguajes formales","c":"#BAAB8C"},"RED":{"n":"Redes de computadores","c":"#CA8C9B"},"LTP":{"n":"Lenguajes, tecnologías y paradigmas de la programación","c":"#9ACA99"}},"ev":[["2025-09-09","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-09","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-09","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-10","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-10","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-11","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-11","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-12","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-12","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-12","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-16","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-16","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-16","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-16","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-09-17","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-09-17","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-09-17","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-17","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-18","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-18","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-18","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-09-19","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-19","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-19","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-09-19","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-23","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-23","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-23","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-23","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-09-24","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-09-24","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-09-24","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-24","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-25","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-25","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-25","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-09-26","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-26","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-26","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-09-26","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-30","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-30","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-30","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-09-30","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-10-01","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-10-01","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-10-01","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-01","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-02","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-02","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-02","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-10-03","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-03","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-03","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-10-03","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-07","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-07","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-07","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-07","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-10-08","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-10-08","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-10-08","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-08","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-14","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-14","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-14","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-14","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-10-15","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-10-15","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-10-15","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-15","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-16","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-16","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-16","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-10-17","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-17","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-17","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-10-17","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-21","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-21","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-21","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-21","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-10-22","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-10-22","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-10-22","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-22","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-23","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-23","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-23","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-10-24","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-24","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-24","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-10-24","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-28","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-28","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-28","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-28","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-10-29","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-10-29","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-10-29","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-10-29","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-06","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-06","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-06","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-11-07","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-07","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-07","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-11-07","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-11","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-11","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-11","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-11","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-11-12","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-11-12","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-11-12","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-12","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-13","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-13","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-13","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-11-14","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-14","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-14","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-11-14","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-18","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-18","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-18","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-18","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-11-19","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-11-19","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-11-19","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-19","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-20","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-20","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-20","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-11-21","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-21","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-21","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-11-21","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-25","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-25","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-25","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-25","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-11-26","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-11-26","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-11-26","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-26","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-27","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-27","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-27","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-11-28","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-28","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-11-28","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-11-28","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-02","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-02","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-02","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-02","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-12-03","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-12-03","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-12-03","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-03","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-04","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-04","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-04","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-12-05","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-05","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-05","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-12-05","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-09","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-09","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-09","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-09","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-12-10","08:00","09:30","MAD","L. 1G 1.3 (LAB. LINUS TORVALDS) (Edificio 1G)","PL"],["2025-12-10","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-12-10","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-10","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-11","09:30","11:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-11","11:00","12:30","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-11","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-12-12","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-12","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-12","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-12-12","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-16","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-16","09:30","11:00","IIP","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-16","11:30","13:00","MAD","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-16","13:00","14:30","AMA","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2025-12-17","08:00","09:30","MAD","L. 1G 1.2 (LAB. TORRES QUEVEDO) (Edificio 1G)","PL"],["2025-12-17","09:30","11:00","IIP","LAB. DSIC 1 (Edificio 1B)","PL"],["2025-12-17","11:30","13:00","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-17","13:00","14:30","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-18","09:30","11:00","MAD","AULA 1E 0.3 (Edificio 1E)","TA"],["2025-12-18","11:00","12:30","IIP","AULA 1E 0.3 (Edificio 1E)","TA"],["2025-12-18","15:00","16:30","FFI","LABORATORIO NIKOLA TESLA (1H L 1.4) (Edificio 1H)","PL"],["2025-12-19","08:00","09:30","FCO","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-19","09:30","11:00","FFI","AULA 1G 0.3 (Edificio 1G)","TA"],["2025-12-19","11:30","13:00","FCO","Lab. Fundamentos de Computadores (2S-18) (Edificio 1G)","PL"],["2025-12-19","13:00","14:30","AMA","AULA 1G 0.3 (Edificio 1G)","TA"],["2026-02-03","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-03","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-03","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-04","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-04","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-05","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-05","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-06","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-06","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-06","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-10","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-10","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-10","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-10","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-02-11","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-02-11","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-02-11","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-11","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-12","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-12","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-12","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-02-13","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-13","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-13","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-02-13","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-17","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-17","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-17","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-17","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-02-18","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-02-18","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-02-18","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-18","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-19","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-19","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-19","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-02-20","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-20","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-20","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-02-20","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-24","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-24","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-24","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-24","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-02-25","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-02-25","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-02-25","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-25","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-26","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-26","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-26","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-02-27","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-27","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-02-27","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-02-27","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-03","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-03","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-03","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-03","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-03-04","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-03-04","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-03-04","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-04","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-05","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-05","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-05","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-03-06","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-06","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-06","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-03-06","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-10","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-10","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-10","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-10","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-03-11","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-03-11","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-03-11","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-11","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-12","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-12","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-12","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-03-13","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-13","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-13","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-03-13","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-24","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-24","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-24","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-24","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-03-25","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-03-25","09:30","11:00","FOE","","PL"],["2026-03-25","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-03-25","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-14","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-14","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-14","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-14","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-04-15","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-04-15","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-04-15","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-15","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-16","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-16","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-16","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-04-17","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-17","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-17","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-04-17","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-20","09:30","11:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-20","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-21","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-21","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-21","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-21","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-04-22","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-04-22","09:30","11:00","FOE","","PL"],["2026-04-22","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-22","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-23","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-23","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-23","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-04-24","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-24","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-24","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-04-24","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-28","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-28","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-28","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-28","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-04-29","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-04-29","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-04-29","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-29","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-30","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-30","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-30","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-04-30","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-05-05","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-05","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-05","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-05","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-05-06","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-05-06","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-05-06","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-06","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-07","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-07","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-07","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-07","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-05-12","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-12","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-12","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-12","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-05-13","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-05-13","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-05-13","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-13","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-14","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-14","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-14","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-05-15","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-15","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-15","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-05-15","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-19","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-19","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-19","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-19","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-05-20","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-05-20","09:30","11:00","FOE","LABORATORI S.01 (Edificio 7D)","PL"],["2026-05-20","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-20","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-21","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-21","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-21","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-05-22","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-22","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-22","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-05-22","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-26","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-26","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-26","11:30","13:00","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-26","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2026-05-27","08:00","09:30","EST","Aula Informática B (Edificio 7A)","PL"],["2026-05-27","09:30","11:00","FOE","","PL"],["2026-05-27","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-27","13:00","14:30","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-28","09:30","11:00","FOE","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-28","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-28","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2026-05-29","08:00","09:30","TCO","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-29","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-05-29","11:30","13:00","TCO","Lab. Tecnología de Computadores (2N-15) (Edificio 1G)","PL"],["2026-05-29","13:00","14:30","EST","AULA 1G 1.2 (Edificio 1G)","TA"],["2026-09-08","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-08","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-09","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-09","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-10","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-10","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-11","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-11","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-15","08:00","09:30","TAL","LAB. DSIC 8 (Edificio 1B)","PL"],["2026-09-15","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-15","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-16","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-16","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-16","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-09-16","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-09-17","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-17","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-18","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-09-18","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-09-18","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-18","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-22","08:00","09:30","TAL","LAB. DSIC 8 (Edificio 1B)","PL"],["2026-09-22","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-22","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-23","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-23","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-23","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-09-23","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-09-24","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-24","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-25","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-09-25","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-09-25","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-25","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-28","09:15","11:15","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-29","08:00","09:30","TAL","LAB. DSIC 8 (Edificio 1B)","PL"],["2026-09-29","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-29","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-30","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-30","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-09-30","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-09-30","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-01","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-01","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-02","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-10-02","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-10-02","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-02","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-06","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-06","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-06","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-07","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-07","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-07","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-10-07","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-08","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-08","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-13","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-13","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-13","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-14","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-14","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-14","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-10-14","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-15","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-15","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-16","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-10-16","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-10-16","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-16","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-20","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-20","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-20","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-21","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-21","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-21","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-10-21","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-10-22","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-22","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-23","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-10-23","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-10-23","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-23","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-27","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-27","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-28","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-28","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-10-28","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-10-28","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-05","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-05","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-06","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-11-06","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-11-06","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-06","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-10","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-10","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-10","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-11","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-11","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-11","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-11-11","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-12","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-12","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-13","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-11-13","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-11-13","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-13","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-17","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-17","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-17","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-18","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-18","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-18","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-11-18","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-19","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-19","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-20","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-11-20","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-11-20","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-20","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-24","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-24","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-24","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-25","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-25","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-25","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-11-25","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-11-26","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-26","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-27","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-11-27","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-11-27","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-11-27","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-01","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-12-01","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-01","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-02","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-02","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-02","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-12-02","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-12-03","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-03","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-04","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-12-04","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-12-04","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-04","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-09","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-09","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-09","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-12-09","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-12-10","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-11","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-12-11","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-12-11","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-11","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-15","08:00","09:30","TAL","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-12-15","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-15","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-16","08:30","10:30","TAL","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-16","11:00","12:30","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-16","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2026-12-16","15:00","16:30","LTP","LAB. DSIC 7 (Edificio 1B)","PL"],["2026-12-17","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-17","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-18","08:00","09:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2026-12-18","09:30","11:00","FSO","Lab. Sistemas Operativos (2S-17) (Edificio 1G)","PL"],["2026-12-18","11:30","13:00","LTP","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-18","13:00","14:30","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-22","09:30","11:00","FSO","AULA 1G 0.6 (Edificio 1G)","TA"],["2026-12-22","11:30","12:30","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-01","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-02","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-02","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-03","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-04","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-04","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-04","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-04","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-05","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-08","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-08","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-02-09","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-09","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-09","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-02-10","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-10","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-02-10","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-02-10","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-02-11","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-11","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-11","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-11","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-02-11","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-12","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-15","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-15","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-02-16","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-16","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-16","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-02-17","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-17","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-02-17","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-02-17","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-02-18","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-18","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-18","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-18","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-02-18","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-19","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-22","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-22","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-02-23","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-23","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-23","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-02-24","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-24","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-02-24","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-02-24","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-02-25","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-25","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-02-25","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-02-25","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-02-25","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-02-26","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-01","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-03-01","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-03-02","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-02","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-02","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-03-03","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-03","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-03-03","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-03-03","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-03-04","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-04","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-04","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-04","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-03-04","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-03-05","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-08","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-03-08","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-03-09","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-09","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-09","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-03-10","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-10","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-03-10","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-03-10","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-03-11","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-11","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-03-11","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-03-11","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-03-11","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-03-12","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-06","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-06","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-06","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-04-07","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-07","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-04-07","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-04-07","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-04-08","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-08","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-08","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-08","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-04-08","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-09","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-12","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-12","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-04-13","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-13","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-13","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-04-14","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-14","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-04-14","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-04-14","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-04-15","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-15","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-15","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-15","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-04-15","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-16","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-19","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-19","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-04-20","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-20","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-20","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-04-21","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-21","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-04-21","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-04-21","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-04-22","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-22","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-22","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-22","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-04-22","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-23","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-26","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-26","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-04-27","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-27","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-27","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-04-28","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-28","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-04-28","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-04-28","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-04-29","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-29","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-04-29","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-04-29","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-04-29","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-04-30","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-03","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-03","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-05-04","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-04","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-04","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-05-05","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-05","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-05-05","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-05-05","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-05-06","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-06","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-06","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-06","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-05-06","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-10","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-10","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-05-11","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-11","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-11","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-05-12","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-12","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-05-12","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-05-12","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-05-13","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-13","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-13","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-13","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-05-13","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-14","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-17","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-17","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-05-18","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-18","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-18","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-05-19","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-19","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-05-19","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-05-19","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-05-20","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-20","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-20","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-20","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-05-20","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-21","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-24","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-24","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"],["2027-05-25","09:30","11:00","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-25","12:00","13:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-25","13:00","14:30","ALG","LAB. LEONHARD EULER (1E L 2.0) (Edificio 1E)","PL"],["2027-05-26","11:30","13:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-26","12:30","14:00","ETC","Lab. Estructura de Computadores (1N-7) (Edificio 1G)","PL"],["2027-05-26","15:00","16:30","RED","Lab. Redes de Computadores (2S-16) (Edificio 1G)","PL"],["2027-05-26","19:00","20:30","DYP","L. 1G 1.0 (LAB. ADA BYRON) (Edificio 1G)","PL"],["2027-05-27","09:00","10:00","ETC","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-27","10:30","12:30","RED","AULA 1G 0.6 (Edificio 1G)","TA"],["2027-05-27","11:00","12:30","PRG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-27","15:00","16:30","PRG","LAB. DSIC 1 (Edificio 1B)","PL"],["2027-05-27","17:00","19:00","DYP","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-28","09:30","11:00","ALG","AULA 1G 1.2 (Edificio 1G)","TA"],["2027-05-31","15:00","17:00","IPC","AULA 1G 1.0 (Edificio 1G)","TA"],["2027-05-31","17:30","19:00","IPC","LAB. DSIC 2 (Edificio 1B)","PL"]]};
+const LAT=39.4699, LON=-0.3763;
+const TYPES={TA:'Teoría',TE:'Teoría',PL:'Laboratorio',SE:'Seminario',TU:'Tutoría',AU:'Aula',LA:'Laboratorio'};
+const $=s=>document.querySelector(s);
+const mem={};
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?mem[k]:d},
+  set(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const fromISO=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=fromISO(s);d.setDate(d.getDate()+n);return iso(d)};
+const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const fmtDur=m=>m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?` ${m%60} min`:''}`;
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const fmtLong=s=>cap(fromISO(s).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}));
+const fmtShort=s=>fromISO(s).toLocaleDateString('es-ES',{day:'numeric',month:'short'}).replace('.','');
+
+/* ---------- estado ---------- */
+let base=store.get('pv_base',null)||BASE_DATA;
+let custom=store.get('pv_events',[]);
+let tasks=store.get('pv_tasks',null);
+if(!tasks){tasks=[
+  {id:'s1',text:'Repasar apuntes de TAL',done:false,date:''},
+  {id:'s2',text:'Preparar la mochila para mañana',done:false,date:''},
+  {id:'s3',text:'Comprobar entregas en PoliformaT',done:false,date:''}];store.set('pv_tasks',tasks)}
+let sel=iso(new Date());
+let viewMonth=sel.slice(0,7);
+let byDate=new Map();
+function index(){byDate=new Map();for(const e of base.ev){if(!byDate.has(e[0]))byDate.set(e[0],[]);byDate.get(e[0]).push(e)}}
+index();
+
+function customOn(date){
+  const out=[];
+  for(const c of custom){
+    let hit=false;
+    if(date===c.date)hit=true;
+    else if(c.rep&&date>c.date&&(!c.until||date<=c.until)){
+      if(c.rep==='d')hit=true;
+      else{const diff=Math.round((fromISO(date)-fromISO(c.date))/864e5);hit=diff%7===0}
+    }
+    if(hit)out.push({id:c.id,custom:true,start:c.start,end:c.end,code:'',name:c.title,place:c.place||'',type:'',color:'#5fd0a0'});
+  }
+  return out;
+}
+function eventsOn(date){
+  const out=(byDate.get(date)||[]).map(e=>{
+    const s=base.subs[e[3]]||{};
+    return {custom:false,start:e[1],end:e[2],code:e[3],name:s.n||e[3],place:e[4],type:TYPES[e[5]]||e[5],color:s.c||'#6ea8ff'};
+  }).concat(customOn(date));
+  return out.sort((a,b)=>mins(a.start)-mins(b.start)||mins(a.end)-mins(b.end));
+}
+
+/* ---------- cabecera ---------- */
+function tickHeader(){
+  const n=new Date(),h=n.getHours();
+  $('#hello').textContent=(h<6?'Buenas noches':h<14?'Buenos días':h<21?'Buenas tardes':'Buenas noches')+', Ferran';
+  $('#today').textContent=fmtLong(iso(n));
+  $('#clock').textContent=`${p2(h)}:${p2(n.getMinutes())}`;
+}
+
+/* ---------- horario ---------- */
+function renderDay(){
+  const today=iso(new Date()),n=new Date(),nowM=n.getHours()*60+n.getMinutes();
+  const evs=eventsOn(sel),isToday=sel===today;
+  $('#dayLabel').textContent=isToday?'Hoy':sel===addDays(today,1)?'Mañana':sel===addDays(today,-1)?'Ayer':'Horario';
+  $('#dayTitle').textContent=fmtLong(sel);
+  const cls=evs.filter(e=>!e.custom).length;
+  $('#daySummary').textContent=evs.length?`${cls} ${cls===1?'clase':'clases'}${evs.length>cls?` · ${evs.length-cls} ${evs.length-cls===1?'evento':'eventos'}`:''} · ${evs[0].start}–${evs.reduce((m,e)=>mins(e.end)>mins(m)?e.end:m,evs[0].end)}`:'Sin clases ni eventos';
+  if(!evs.length){$('#events').innerHTML='<li class="empty">Día libre. Añade un evento con “+ Evento”.</li>';return}
+  const nextIdx=isToday?evs.findIndex(e=>mins(e.start)>nowM):-1;
+  $('#events').innerHTML=evs.map((e,i)=>{
+    const s=mins(e.start),f=mins(e.end);
+    let cls='',tag='';
+    if(isToday){
+      if(f<=nowM)cls='past';
+      else if(s<=nowM){cls='live';tag=`<span class="tag now">AHORA · ${fmtDur(f-nowM)}</span>`}
+      else if(i===nextIdx)tag=`<span class="tag next">en ${fmtDur(s-nowM)}</span>`;
+    }
+    const prog=cls==='live'?`<div class="bar"><i style="width:${Math.min(100,Math.round((nowM-s)/(f-s)*100))}%"></i></div>`:'';
+    const code=e.custom?'<span class="tag mine">EVENTO</span>':`<span class="tag">${esc(e.code)}</span>`;
+    return `<li class="ev ${cls}" style="--c:${esc(e.color)}">
+      <div class="ev-t num"><b>${e.start}</b>${e.end}</div>
+      <div><div class="ev-n">${esc(e.name)}</div><div class="ev-p">${esc([e.type,e.place].filter(Boolean).join(' · '))}</div></div>
+      <div class="ev-side">${tag}${code}${e.custom?`<button class="x" type="button" data-del="${esc(e.id)}" aria-label="Borrar evento">×</button>`:''}</div>${prog}</li>`;
+  }).join('');
+}
+$('#events').addEventListener('click',e=>{
+  const b=e.target.closest('[data-del]');if(!b)return;
+  custom=custom.filter(c=>c.id!==b.dataset.del);store.set('pv_events',custom);renderAll();
+});
+
+/* ---------- calendario ---------- */
+function renderCal(){
+  const [y,m]=viewMonth.split('-').map(Number);
+  $('#monthTitle').textContent=cap(new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' '));
+  const first=new Date(y,m-1,1),lead=(first.getDay()+6)%7,today=iso(new Date());
+  const start=new Date(y,m-1,1-lead);
+  const taskDates=new Set(tasks.filter(t=>!t.done&&t.date).map(t=>t.date));
+  let h=['L','M','X','J','V','S','D'].map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const s=iso(d);
+    if(i>=35&&d.getMonth()!==m-1)break;
+    const nCls=(byDate.get(s)||[]).length,hasMine=customOn(s).length>0||taskDates.has(s);
+    const c=['d'];if(d.getMonth()!==m-1)c.push('out');if(d.getDay()===0||d.getDay()===6)c.push('we');if(s===today)c.push('today');if(s===sel)c.push('sel');
+    h+=`<button type="button" class="${c.join(' ')}" data-d="${s}" aria-label="${fmtLong(s)}"><span class="num">${d.getDate()}</span><span class="dots">${nCls?'<i></i>':''}${hasMine?'<i class="t"></i>':''}</span></button>`;
+  }
+  $('#grid').innerHTML=h;
+  const nm=base.ev.length;
+  $('#calInfo').textContent=`${nm} clases cargadas`;
+  $('#resetBtn').hidden=!store.get('pv_base',null);
+}
+$('#grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-d]');if(!b)return;
+  sel=b.dataset.d;viewMonth=sel.slice(0,7);renderAll();
+});
+const shiftMonth=n=>{const [y,m]=viewMonth.split('-').map(Number);const d=new Date(y,m-1+n,1);viewMonth=`${d.getFullYear()}-${p2(d.getMonth()+1)}`;renderCal()};
+$('#prevM').onclick=()=>shiftMonth(-1);
+$('#nextM').onclick=()=>shiftMonth(1);
+const goDay=s=>{sel=s;viewMonth=s.slice(0,7);renderAll()};
+$('#prevDay').onclick=()=>goDay(addDays(sel,-1));
+$('#nextDay').onclick=()=>goDay(addDays(sel,1));
+$('#goToday').onclick=()=>goDay(iso(new Date()));
+
+/* ---------- checklist ---------- */
+function renderTasks(){
+  const today=iso(new Date());
+  const list=[...tasks].sort((a,b)=>a.done-b.done||((a.date||'9')<(b.date||'9')?-1:(a.date||'9')>(b.date||'9')?1:0));
+  const done=tasks.filter(t=>t.done).length;
+  $('#count').textContent=`${done}/${tasks.length}`;
+  $('#progBar').style.width=tasks.length?`${Math.round(done/tasks.length*100)}%`:'0';
+  $('#clearDone').hidden=!done;
+  if(!list.length){$('#tasks').innerHTML='<li class="empty">Sin tareas. Añade la primera arriba.</li>';return}
+  $('#tasks').innerHTML=list.map(t=>{
+    let due='';
+    if(t.date){
+      const c=t.done?'':t.date<today?'venc':t.date===today?'hoy':'';
+      const label=t.date===today?'Hoy':t.date===addDays(today,1)?'Mañana':t.date<today?'Vencida · '+fmtShort(t.date):fmtShort(t.date);
+      due=`<span class="due ${c}">${esc(label)}</span>`;
+    }else due='<span></span>';
+    return `<li class="task ${t.done?'done':''}"><input type="checkbox" data-t="${esc(t.id)}" ${t.done?'checked':''} aria-label="Marcar ${esc(t.text)}"><span>${esc(t.text)}</span>${due}<button class="x" type="button" data-rm="${esc(t.id)}" aria-label="Borrar tarea">×</button></li>`;
+  }).join('');
+}
+$('#tasks').addEventListener('change',e=>{
+  const id=e.target.dataset.t;if(!id)return;
+  const t=tasks.find(x=>x.id===id);if(t){t.done=e.target.checked;store.set('pv_tasks',tasks);renderTasks();renderCal()}
+});
+$('#tasks').addEventListener('click',e=>{
+  const b=e.target.closest('[data-rm]');if(!b)return;
+  tasks=tasks.filter(t=>t.id!==b.dataset.rm);store.set('pv_tasks',tasks);renderTasks();renderCal();
+});
+$('#taskForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const text=$('#taskText').value.trim();if(!text)return;
+  tasks.push({id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),text,done:false,date:$('#taskDate').value});
+  store.set('pv_tasks',tasks);$('#taskText').value='';$('#taskDate').value='';renderTasks();renderCal();
+});
+$('#clearDone').onclick=()=>{tasks=tasks.filter(t=>!t.done);store.set('pv_tasks',tasks);renderTasks();renderCal()};
+
+/* ---------- nuevo evento ---------- */
+const dlg=$('#dlg');
+$('#addEv').onclick=()=>{
+  $('#evForm').reset();$('#fDate').value=sel;$('#fStart').value='16:00';$('#fEnd').value='17:00';
+  if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');
+  $('#fTitle').focus();
+};
+$('#fCancel').onclick=()=>dlg.close();
+$('#evForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const s=$('#fStart').value,f=$('#fEnd').value;
+  if(mins(f)<=mins(s)){toast('La hora de fin debe ser posterior al inicio');return}
+  custom.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:$('#fTitle').value.trim(),date:$('#fDate').value,start:s,end:f,place:$('#fPlace').value.trim(),rep:$('#fRep').value,until:$('#fUntil').value});
+  store.set('pv_events',custom);
+  sel=$('#fDate').value;viewMonth=sel.slice(0,7);
+  dlg.close();renderAll();toast('Evento guardado');
+});
+let toastT;
+function toast(m){
+  let t=$('.toast');if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}
+  t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},2600);
+}
+
+/* ---------- importar .ics ---------- */
+const tzFmt=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function icsDT(v){
+  v=v.trim();
+  if(/^\d{8}$/.test(v))return {d:`${v.slice(0,4)}-${v.slice(4,6)}-${v.slice(6,8)}`,t:'00:00',all:true};
+  const m=v.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/);if(!m)return null;
+  if(m[7]){
+    const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]));
+    const [d,t]=tzFmt.format(dt).split(' ');return {d,t};
+  }
+  return {d:`${m[1]}-${m[2]}-${m[3]}`,t:`${m[4]}:${m[5]}`};
+}
+const unesc=s=>s.replace(/\\n/gi,' ').replace(/\\([,;\\])/g,'$1');
+function parseICS(txt){
+  txt=txt.replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'');
+  const subs={},ev=[];
+  const re=/BEGIN:VEVENT\n([\s\S]*?)END:VEVENT/g;let m;
+  while((m=re.exec(txt))){
+    const p={};
+    for(const l of m[1].split('\n')){const i=l.indexOf(':');if(i>0)p[l.slice(0,i).split(';')[0]]=l.slice(i+1)}
+    const a=icsDT(p.DTSTART||''),z=icsDT(p.DTEND||p.DTSTART||'');if(!a||!z)continue;
+    const code=unesc(p.SUMMARY||'Evento').trim();
+    const desc=p.DESCRIPTION||'';
+    const nm=desc.match(/<b>(.*?)\s*\(\d+\)<\/b>/);
+    const ty=desc.match(/Tipo de docencia:\s*(\w+)/);
+    if(!subs[code])subs[code]={n:nm?nm[1]:code,c:p.UPV_BGCOLOR||'#6ea8ff'};
+    ev.push([a.d,a.t,a.all?'23:59':z.t,code,unesc(p.LOCATION||''),ty?ty[1]:'']);
+  }
+  ev.sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:mins(x[1])-mins(y[1]));
+  return {subs,ev};
+}
+$('#importBtn').onclick=()=>$('#icsFile').click();
+$('#icsFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const r=parseICS(await f.text());
+    if(!r.ev.length){toast('El archivo no contiene eventos');return}
+    base=r;store.set('pv_base',base);index();renderAll();toast(`${r.ev.length} eventos importados`);
+  }catch(err){toast('No se pudo leer el archivo .ics')}
+  e.target.value='';
+});
+$('#resetBtn').onclick=()=>{store.set('pv_base',null);try{localStorage.removeItem('pv_base')}catch(e){}base=BASE_DATA;index();renderAll();toast('Horario original restaurado')};
+
+/* ---------- tiempo ---------- */
+const WX={0:['Despejado','sun'],1:['Casi despejado','sun'],2:['Parcialmente nublado','part'],3:['Nublado','cloud'],45:['Niebla','fog'],48:['Niebla','fog'],
+ 51:['Llovizna','rain'],53:['Llovizna','rain'],55:['Llovizna','rain'],56:['Llovizna helada','rain'],57:['Llovizna helada','rain'],61:['Lluvia débil','rain'],63:['Lluvia','rain'],65:['Lluvia fuerte','rain'],
+ 66:['Lluvia helada','rain'],67:['Lluvia helada','rain'],71:['Nieve débil','snow'],73:['Nieve','snow'],75:['Nieve fuerte','snow'],77:['Granizo','snow'],
+ 80:['Chubascos','rain'],81:['Chubascos','rain'],82:['Chubascos fuertes','rain'],85:['Chubascos de nieve','snow'],86:['Chubascos de nieve','snow'],95:['Tormenta','storm'],96:['Tormenta con granizo','storm'],99:['Tormenta con granizo','storm']};
+const IC={
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ part:'<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M1.5 8H3M3.4 3.4l1 1M12.6 3.4l-1 1"/><path d="M7 20h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 13a3.5 3.5 0 0 0 0 7z"/>',
+ cloud:'<path d="M7 19h10a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.2 11.2 4 4 0 0 0 7 19z"/>',
+ fog:'<path d="M4 8h16M2 12h20M4 16h16M7 20h10"/>',
+ rain:'<path d="M7 15h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 8a3.5 3.5 0 0 0 0 7z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+ snow:'<path d="M7 14h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 7a3.5 3.5 0 0 0 0 7z"/><path d="M8 18h.01M12 20h.01M16 18h.01M10 22h.01M14 22h.01"/>',
+ storm:'<path d="M7 14h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 7a3.5 3.5 0 0 0 0 7z"/><path d="M12 14l-2 4h4l-2 4"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]||IC.cloud}</svg>`;
+const wxInfo=c=>WX[c]||['Variable','cloud'];
+const r0=x=>Math.round(x);
+function compare(d){
+  const a=Math.abs(d);
+  if(a<1)return 'Misma temperatura que ayer';
+  const adj=a<2.5?'Un poco ':a>=5?'Mucho ':'';
+  const t=(d>0?'más cálido':'más frío')+' que ayer';
+  return adj?adj+t:cap(t);
+}
+function renderWx(w,stale){
+  const now=new Date(),h=now.getHours(),dl=w.daily,hr=w.hourly;
+  const mT=(dl.temperature_2m_max[1]+dl.temperature_2m_min[1])/2,mY=(dl.temperature_2m_max[0]+dl.temperature_2m_min[0])/2;
+  const diff=mT-mY;
+  const [desc,ic]=wxInfo(w.current.weather_code);
+  const rain=dl.precipitation_probability_max[1];
+  let slots='';
+  let count=0;
+  for(let i=24+h+3;i<hr.time.length&&count<5;i+=3,count++){
+    const t=hr.time[i].slice(11,16);
+    slots+=`<div class="hour num">${t}<b>${r0(hr.temperature_2m[i])}°</b><i>${hr.precipitation_probability[i]}%</i></div>`;
+  }
+  $('#wx').innerHTML=`<div class="wx">
+    <div class="wx-now">${svg(ic)}<div><div class="wx-temp num">${r0(w.current.temperature_2m)}°</div><div class="wx-desc">${esc(desc)} · sensación ${r0(w.current.apparent_temperature)}°</div></div></div>
+    <div><div class="wx-cmp">${compare(diff)}</div>
+      <div class="wx-sub num">Hoy ${r0(dl.temperature_2m_max[1])}° / ${r0(dl.temperature_2m_min[1])}° · Ayer ${r0(dl.temperature_2m_max[0])}° / ${r0(dl.temperature_2m_min[0])}° · Viento ${r0(w.current.wind_speed_10m)} km/h</div></div>
+    ${rain>=40?`<div class="wx-alert">Probabilidad de lluvia hoy: ${rain}%. Lleva paraguas.</div>`:''}
+    <div class="hours" aria-label="Próximas horas">${slots}</div>
+    ${stale?`<p class="wx-msg" style="grid-column:1/-1;margin:0">${esc(stale)}</p>`:''}
+  </div>`;
+}
+async function loadWx(manual){
+  let cached=store.get('pv_wx',null);
+  if(cached&&iso(new Date(cached.t))!==iso(new Date()))cached=null;
+  if(cached&&!manual)try{renderWx(cached.data,'Datos guardados; actualizando…')}catch(e){}
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&past_days=1&forecast_days=3&timezone=Europe%2FMadrid&wind_speed_unit=kmh`;
+    const r=await fetch(u);if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    store.set('pv_wx',{t:Date.now(),data});renderWx(data,'');
+  }catch(e){
+    if(cached){try{renderWx(cached.data,`Sin conexión. Datos de ${new Date(cached.t).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.`);return}catch(_){}}
+    $('#wx').innerHTML='<p class="wx-msg">No se pudo cargar el tiempo. Comprueba la conexión y pulsa Actualizar.</p>';
+  }
+}
+$('#wxRefresh').onclick=()=>loadWx(true);
+
+/* ---------- arranque ---------- */
+function renderAll(){renderDay();renderCal();renderTasks()}
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+tickHeader();renderAll();loadWx(false);
+setInterval(()=>{tickHeader();if(sel===iso(new Date()))renderDay()},30000);
+setInterval(()=>loadWx(true),30*60*1000);
+</script>
+</body>
+</html>
