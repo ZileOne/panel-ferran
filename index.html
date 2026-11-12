@@ -518,18 +518,24 @@ function renderWx(w,stale){
   const mT=(dl.temperature_2m_max[1]+dl.temperature_2m_min[1])/2,mY=(dl.temperature_2m_max[0]+dl.temperature_2m_min[0])/2;
   const diff=mT-mY;
   const [desc,ic]=wxInfo(w.current.weather_code);
-  const rain=dl.precipitation_probability_max[1];
+  const pr=hr.precipitation||[],pp=hr.precipitation_probability||[];
+  const mm=i=>pr[i]||0;
+  /* lluvia: solo cuenta si hay milímetros previstos en las horas que quedan de hoy */
+  let rest=0,peak=-1,peakMm=0,peakProb=0;
+  for(let i=24+h;i<48&&i<pr.length;i++){rest+=mm(i);if(mm(i)>peakMm){peakMm=mm(i);peak=i;peakProb=pp[i]||0}}
+  const rain=rest>=0.5&&peakProb>=40;
   let slots='';
   let count=0;
   for(let i=24+h+3;i<hr.time.length&&count<5;i+=3,count++){
     const t=hr.time[i].slice(11,16);
-    slots+=`<div class="hour num">${t}<b>${r0(hr.temperature_2m[i])}°</b><i>${hr.precipitation_probability[i]}%</i></div>`;
+    const blk=mm(i)+mm(i+1)+mm(i+2);
+    slots+=`<div class="hour num">${t}<b>${r0(hr.temperature_2m[i])}°</b><i>${pr.length?(blk>=0.1?blk.toFixed(1).replace('.',',')+' mm':'seco'):''}</i></div>`;
   }
   $('#wx').innerHTML=`<div class="wx">
     <div class="wx-now">${svg(ic)}<div><div class="wx-temp num">${r0(w.current.temperature_2m)}°</div><div class="wx-desc">${esc(desc)} · sensación ${r0(w.current.apparent_temperature)}°</div></div></div>
     <div><div class="wx-cmp">${compare(diff)}</div>
       <div class="wx-sub num">Hoy ${r0(dl.temperature_2m_max[1])}° / ${r0(dl.temperature_2m_min[1])}° · Ayer ${r0(dl.temperature_2m_max[0])}° / ${r0(dl.temperature_2m_min[0])}° · Viento ${r0(w.current.wind_speed_10m)} km/h</div></div>
-    ${rain>=40?`<div class="wx-alert">Probabilidad de lluvia hoy: ${rain}%. Lleva paraguas.</div>`:''}
+    ${rain?`<div class="wx-alert">Lluvia prevista hoy: ${rest.toFixed(1).replace('.',',')} mm, sobre todo a las ${hr.time[peak].slice(11,16)}. Lleva paraguas.</div>`:''}
     <div class="hours" aria-label="Próximas horas">${slots}</div>
     ${stale?`<p class="wx-msg" style="grid-column:1/-1;margin:0">${esc(stale)}</p>`:''}
   </div>`;
@@ -539,7 +545,7 @@ async function loadWx(manual){
   if(cached&&iso(new Date(cached.t))!==iso(new Date()))cached=null;
   if(cached&&!manual)try{renderWx(cached.data,'Datos guardados; actualizando…')}catch(e){}
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&past_days=1&forecast_days=3&timezone=Europe%2FMadrid&wind_speed_unit=kmh`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&past_days=1&forecast_days=3&timezone=Europe%2FMadrid&wind_speed_unit=kmh`;
     const r=await fetch(u);if(!r.ok)throw new Error(r.status);
     const data=await r.json();
     store.set('pv_wx',{t:Date.now(),data});renderWx(data,'');
