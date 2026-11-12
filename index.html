@@ -148,6 +148,24 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .tag.late{background:rgba(255,122,122,.14);color:var(--bad)}
 .tag.rec{background:var(--accent);color:#07101f}
 .note{color:var(--muted);font-size:12px;margin:12px 0 0}
+.wk{grid-column:1/-1}
+.wk-sc{overflow-x:auto;margin-top:12px}
+.wk-g{min-width:540px}
+.wk-hd,.wk-bd{display:grid;grid-template-columns:44px repeat(var(--n),minmax(0,1fr))}
+.wk-hd button{background:none;border:0;border-bottom:2px solid var(--line);padding:6px 4px;text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.wk-hd button b{display:block;font:600 18px var(--font-d);color:var(--fg);letter-spacing:0}
+.wk-hd button.today b{color:var(--now)}
+.wk-hd button.sel{border-bottom-color:var(--accent)}
+.wk-hd .tag{display:inline-block;margin-top:2px;font-size:9px;padding:1px 6px;text-transform:none}
+.wk-ax{position:relative}
+.wk-ax span{position:absolute;right:6px;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+.wk-c{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 45px,var(--line) 45px,var(--line) 46px)}
+.wk-c.td{background-color:rgba(255,180,84,.04)}
+.we{position:absolute;box-sizing:border-box;padding:3px 5px;border:0;border-left:3px solid var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 26%,var(--surface2));color:var(--fg);font-size:11.5px;line-height:1.25;text-align:left;overflow:hidden;cursor:pointer}
+.we b{display:block;font:600 12px var(--font-d)}
+.we small{display:block;color:var(--muted);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.we.past{opacity:.5}
+.wk-now{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--now);z-index:2;pointer-events:none}
 .po{text-align:center;margin:10px 0 4px}
 .po-t{font:700 64px/1 var(--font-d);letter-spacing:-.02em}
 .po-p{color:var(--muted);font-size:13px;margin-top:6px}
@@ -195,7 +213,7 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .col,.side{display:contents}
-  .wxc{order:1}.busc{order:2}.sch{order:3}.pomc{order:4}.stu{order:5}.exm{order:6}.hab{order:7}.chk{order:8}.cal{order:9}
+  .wxc{order:1}.busc{order:2}.sch{order:3}.wk{order:4}.pomc{order:5}.stu{order:6}.exm{order:7}.hab{order:8}.chk{order:9}.cal{order:10}
 }
 @media (max-width:480px){
   .ev{grid-template-columns:58px minmax(0,1fr)}
@@ -310,6 +328,18 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
       <div class="foot"><span></span><button class="btn ghost" id="clearDone" type="button">Borrar hechas</button></div>
     </section>
   </div>
+
+  <section class="card wk" aria-label="Semana">
+    <div class="row between" style="flex-wrap:wrap;gap:8px">
+      <div><h2>Semana</h2><p class="day-title" id="wkTitle"></p></div>
+      <div class="row day-nav">
+        <button class="btn icon" id="wkPrev" type="button" aria-label="Semana anterior">‹</button>
+        <button class="btn" id="wkNow" type="button">Esta semana</button>
+        <button class="btn icon" id="wkNext" type="button" aria-label="Semana siguiente">›</button>
+      </div>
+    </div>
+    <div class="wk-sc"><div class="wk-g" id="wk"></div></div>
+  </section>
 </div>
 
 <dialog id="sdlg">
@@ -1003,15 +1033,67 @@ $('#hForm').addEventListener('submit',e=>{
   save('habits');hdlg.close();renderHabits();
 });
 
+/* ---------- vista semanal ---------- */
+const HP=46;
+function lanes(list){
+  list.sort((a,b)=>a.s-b.s||b.f-a.f);
+  let cl=[],end=0;const out=[];
+  const flush=()=>{const n=Math.max(1,...cl.map(e=>e.l+1));cl.forEach(e=>{e.n=n});out.push(...cl);cl=[]};
+  for(const e of list){
+    if(cl.length&&e.s>=end)flush();
+    const used=cl.filter(x=>x.f>e.s).map(x=>x.l);let l=0;while(used.includes(l))l++;
+    e.l=l;cl.push(e);end=Math.max(end,e.f);
+  }
+  if(cl.length)flush();
+  return out;
+}
+function renderWeek(){
+  const today=iso(new Date()),ws=weekStart(sel),all=[0,1,2,3,4,5,6].map(i=>addDays(ws,i));
+  const ev=all.map(d=>eventsOn(d));
+  const nd=ev[6].length?7:ev[5].length?6:5,days=all.slice(0,nd);
+  const flat=ev.slice(0,nd).flat();
+  const minH=flat.length?Math.floor(Math.min(...flat.map(e=>mins(e.start)))/60):8;
+  const maxH=flat.length?Math.ceil(Math.max(...flat.map(e=>mins(e.end)))/60):14;
+  const H=Math.max(1,maxH-minH),n=new Date(),nowM=n.getHours()*60+n.getMinutes();
+  $('#wkTitle').textContent=`${fmtShort(days[0])} – ${fmtShort(days[nd-1])}`;
+  const exOn=d=>exams.some(x=>!x.del&&x.date===d);
+  let hd=`<div class="wk-hd" style="--n:${nd}"><div></div>`+days.map(d=>{
+    const w=fromISO(d).toLocaleDateString('es-ES',{weekday:'short'}).replace('.','');
+    return `<button type="button" class="${d===today?'today':''} ${d===sel?'sel':''}" data-wd="${d}">${esc(w)}<b class="num">${fromISO(d).getDate()}</b>${exOn(d)?'<span class="tag late">EXAMEN</span>':''}</button>`;
+  }).join('')+'</div>';
+  let ax='<div class="wk-ax" style="height:'+H*HP+'px">';
+  for(let h=minH;h<=maxH;h++)ax+=`<span style="top:${(h-minH)*HP}px">${p2(h)}:00</span>`;
+  ax+='</div>';
+  let cols='';
+  days.forEach((d,i)=>{
+    const items=lanes(ev[i].map(e=>({e,s:mins(e.start),f:mins(e.end)})));
+    let h='';
+    for(const it of items){
+      const e=it.e,top=(it.s-minH*60)/60*HP,ht=Math.max(20,(it.f-it.s)/60*HP-2);
+      const w=100/it.n,left=it.l*w,place=(e.place||'').split('(')[0].trim();
+      const past=d<today||(d===today&&it.f<=nowM);
+      h+=`<button type="button" class="we ${past?'past':''}" data-wd="${d}" style="top:${top}px;height:${ht}px;left:calc(${left}% + 1px);width:calc(${w}% - 2px);--c:${esc(e.color)}" title="${esc(e.name)} ${e.start}–${e.end}${place?' · '+esc(place):''}"><b>${esc(e.custom?e.name:e.code)}</b>${ht>=34?`<small class="num">${e.start}–${e.end}</small>`:''}${ht>=54&&place?`<small>${esc(place)}</small>`:''}</button>`;
+    }
+    if(d===today&&nowM>=minH*60&&nowM<=maxH*60)h+=`<div class="wk-now" style="top:${(nowM-minH*60)/60*HP}px"></div>`;
+    cols+=`<div class="wk-c ${d===today?'td':''}" style="height:${H*HP}px">${h}</div>`;
+  });
+  $('#wk').style.setProperty('--n',nd);
+  $('#wk').innerHTML=hd+`<div class="wk-bd" style="--n:${nd}">${ax}${cols}</div>`;
+}
+$('#wk').addEventListener('click',e=>{const b=e.target.closest('[data-wd]');if(b)goDay(b.dataset.wd)});
+$('#wkPrev').onclick=()=>goDay(addDays(sel,-7));
+$('#wkNext').onclick=()=>goDay(addDays(sel,7));
+$('#wkNow').onclick=()=>goDay(iso(new Date()));
+
 /* ---------- arranque ---------- */
-function renderAll(){renderDay();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo()}
+function renderAll(){renderDay();renderWeek();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo()}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 tickHeader();renderAll();loadWx(false);
 if(SY.token)sync();else setSync('Activar sincronización');
 setInterval(sync,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();loadWx(false)}});
 window.addEventListener('online',sync);
-setInterval(()=>{tickHeader();if(sel===iso(new Date())){renderDay();renderBus()}renderHabits();renderExams()},60000);
+setInterval(()=>{tickHeader();if(sel===iso(new Date())){renderDay();renderBus()}renderWeek();renderHabits();renderExams()},30000);
 setInterval(()=>loadWx(true),30*60*1000);
 </script>
 </body>
