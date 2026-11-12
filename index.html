@@ -161,10 +161,10 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .wk-ax span{position:absolute;right:6px;transform:translateY(-50%);font-size:11px;color:var(--muted)}
 .wk-c{position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 45px,var(--line) 45px,var(--line) 46px)}
 .wk-c.td{background-color:rgba(255,180,84,.04)}
-.we{position:absolute;box-sizing:border-box;padding:3px 5px;border:0;border-left:3px solid var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 26%,var(--surface2));color:var(--fg);font-size:11.5px;line-height:1.25;text-align:left;overflow:hidden;cursor:pointer}
-.we b{display:block;font:600 12px var(--font-d)}
-.we small{display:block;color:var(--muted);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.we.past{opacity:.5}
+.wev{position:absolute;box-sizing:border-box;padding:3px 5px;border:0;border-left:3px solid var(--c);border-radius:6px;background:color-mix(in srgb,var(--c) 26%,var(--surface2));color:var(--fg);font-size:11.5px;line-height:1.25;text-align:left;overflow:hidden;cursor:pointer}
+.wev b{display:block;font:600 12px var(--font-d)}
+.wev small{display:block;color:var(--muted);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev.past{opacity:.5}
 .wk-now{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--now);z-index:2;pointer-events:none}
 .po{text-align:center;margin:10px 0 4px}
 .po-t{font:700 64px/1 var(--font-d);letter-spacing:-.02em}
@@ -1072,7 +1072,7 @@ function renderWeek(){
       const e=it.e,top=(it.s-minH*60)/60*HP,ht=Math.max(20,(it.f-it.s)/60*HP-2);
       const w=100/it.n,left=it.l*w,place=(e.place||'').split('(')[0].trim();
       const past=d<today||(d===today&&it.f<=nowM);
-      h+=`<button type="button" class="we ${past?'past':''}" data-wd="${d}" style="top:${top}px;height:${ht}px;left:calc(${left}% + 1px);width:calc(${w}% - 2px);--c:${esc(e.color)}" title="${esc(e.name)} ${e.start}–${e.end}${place?' · '+esc(place):''}"><b>${esc(e.custom?e.name:e.code)}</b>${ht>=34?`<small class="num">${e.start}–${e.end}</small>`:''}${ht>=54&&place?`<small>${esc(place)}</small>`:''}</button>`;
+      h+=`<button type="button" class="wev ${past?'past':''}" data-wd="${d}" style="top:${top}px;height:${ht}px;left:calc(${left}% + 1px);width:calc(${w}% - 2px);--c:${esc(e.color)}" title="${esc(e.name)} ${e.start}–${e.end}${place?' · '+esc(place):''}"><b>${esc(e.custom?e.name:e.code)}</b>${ht>=34?`<small class="num">${e.start}–${e.end}</small>`:''}${ht>=54&&place?`<small>${esc(place)}</small>`:''}</button>`;
     }
     if(d===today&&nowM>=minH*60&&nowM<=maxH*60)h+=`<div class="wk-now" style="top:${(nowM-minH*60)/60*HP}px"></div>`;
     cols+=`<div class="wk-c ${d===today?'td':''}" style="height:${H*HP}px">${h}</div>`;
