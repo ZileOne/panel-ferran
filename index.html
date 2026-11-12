@@ -172,7 +172,7 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .xr .t small{display:block;color:var(--muted);font-size:12.5px}
 .hb{padding:12px 0;border-bottom:1px solid var(--line)}
 .hb:last-child{border-bottom:0}
-.hb-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.hb-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center}
 .ck{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);background:none;display:grid;place-content:center;padding:0}
 .ck.on{background:var(--ok);border-color:var(--ok)}
 .ck.on::after{content:"";width:6px;height:11px;border:solid #07130d;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
@@ -186,6 +186,7 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .dot.miss{border-color:var(--bad)}
 .dot.off{opacity:.3}
 .dot.tod{box-shadow:0 0 0 2px var(--now-soft),0 0 0 3px var(--now)}
+.x.arm{color:var(--bad);font-size:12px;border:1px solid var(--bad);padding:3px 8px;white-space:nowrap}
 .mi{width:64px;padding:5px 8px;text-align:right}
 .mn{color:var(--muted);font-size:12.5px}
 .dp{display:flex;gap:6px;flex-wrap:wrap}
@@ -957,7 +958,8 @@ function renderHabits(){
     const mi=h.min>0?`<input class="in mi num" type="number" min="0" max="600" step="5" value="${hval(h,today)||''}" placeholder="0" data-hm="${esc(h.id)}" aria-label="Minutos hoy"><span class="mn">/ ${h.min} min</span>`:'';
     return `<div class="hb"><div class="hb-top"><button class="ck ${done?'on':''}" type="button" data-hc="${esc(h.id)}" aria-label="Marcar ${esc(h.name)}"></button>
       <button class="hb-name" type="button" data-he="${esc(h.id)}">${esc(h.name)}<small>${esc(dsc)}${h.min>0?' · '+h.min+' min':''}${sch?'':' · hoy no toca'}</small></button>
-      <div class="stk num">${st} ${st===1?'día':'días'}<small>mejor ${best}</small></div></div>
+      <div class="stk num">${st} ${st===1?'día':'días'}<small>mejor ${best}</small></div>
+      <button class="x hx" type="button" data-hx="${esc(h.id)}" aria-label="Borrar hábito ${esc(h.name)}">×</button></div>
       <div class="hb-bot">${dots}${mi}</div></div>`;
   }).join('');
 }
@@ -967,6 +969,12 @@ $('#habits').addEventListener('click',e=>{
   if(b){const h=habits.find(x=>x.id===b.dataset.hc);hset(h,today,hdone(h,today)?0:hneed(h));return}
   b=e.target.closest('[data-hd]');
   if(b){const h=habits.find(x=>x.id===b.dataset.hd),day=b.dataset.day;hset(h,day,hdone(h,day)?0:hneed(h));return}
+  b=e.target.closest('[data-hx]');
+  if(b){
+    if(b.dataset.arm){const h=habits.find(x=>x.id===b.dataset.hx);if(h){h.del=true;h.u=Date.now();save('habits');renderHabits()}return}
+    b.dataset.arm='1';b.textContent='¿Borrar?';b.classList.add('arm');
+    setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='×';b.classList.remove('arm')}},3000);return;
+  }
   b=e.target.closest('[data-he]');
   if(b)openHabit(habits.find(x=>x.id===b.dataset.he));
 });
