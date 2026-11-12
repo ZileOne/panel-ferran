@@ -148,10 +148,53 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
 .tag.late{background:rgba(255,122,122,.14);color:var(--bad)}
 .tag.rec{background:var(--accent);color:#07101f}
 .note{color:var(--muted);font-size:12px;margin:12px 0 0}
+.po{text-align:center;margin:10px 0 4px}
+.po-t{font:700 64px/1 var(--font-d);letter-spacing:-.02em}
+.po-p{color:var(--muted);font-size:13px;margin-top:6px}
+.po.brk .po-t{color:var(--ok)}
+.po-b{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.pset{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.pset summary{cursor:pointer;color:var(--muted);font-size:13px}
+.pg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.pg label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.sr{display:grid;grid-template-columns:minmax(0,1fr) 64px 64px 64px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.sr.h{color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-bottom:0;padding-bottom:2px}
+.sr .num{text-align:right}
+.sr .nm{overflow-wrap:anywhere}
+.sr .bar2{grid-column:1/-1;height:4px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:-2px}
+.sr .bar2 i{display:block;height:100%;background:var(--accent)}
+.sess{margin-top:12px;color:var(--muted);font-size:13px}
+.sess div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0}
+.xr{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.xr .dd{text-align:center;font:700 24px/1 var(--font-d)}
+.xr .dd small{display:block;font:500 11px var(--font-b);color:var(--muted);margin-top:2px}
+.xr.soon .dd{color:var(--now)}.xr.urgent .dd{color:var(--bad)}
+.xr .t small{display:block;color:var(--muted);font-size:12.5px}
+.hb{padding:12px 0;border-bottom:1px solid var(--line)}
+.hb:last-child{border-bottom:0}
+.hb-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.ck{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);background:none;display:grid;place-content:center;padding:0}
+.ck.on{background:var(--ok);border-color:var(--ok)}
+.ck.on::after{content:"";width:6px;height:11px;border:solid #07130d;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.hb-name{background:none;border:0;padding:0;text-align:left;font-weight:500;overflow-wrap:anywhere}
+.hb-name small{display:block;color:var(--muted);font-weight:400;font-size:12.5px}
+.stk{font:600 13px var(--font-d);color:var(--now);white-space:nowrap;text-align:right}
+.stk small{display:block;color:var(--muted);font:400 11px var(--font-b)}
+.hb-bot{display:flex;align-items:center;gap:6px;margin-top:8px;padding-left:36px;flex-wrap:wrap}
+.dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);background:none;padding:0}
+.dot.ok{background:var(--ok);border-color:var(--ok)}
+.dot.miss{border-color:var(--bad)}
+.dot.off{opacity:.3}
+.dot.tod{box-shadow:0 0 0 2px var(--now-soft),0 0 0 3px var(--now)}
+.mi{width:64px;padding:5px 8px;text-align:right}
+.mn{color:var(--muted);font-size:12.5px}
+.dp{display:flex;gap:6px;flex-wrap:wrap}
+.dp button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface2)}
+.dp button.on{background:var(--accent);color:#07101f;border-color:var(--accent);font-weight:600}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .col,.side{display:contents}
-  .wxc{order:1}.busc{order:2}.sch{order:3}.chk{order:4}.cal{order:5}
+  .wxc{order:1}.busc{order:2}.sch{order:3}.pomc{order:4}.stu{order:5}.exm{order:6}.hab{order:7}.chk{order:8}.cal{order:9}
 }
 @media (max-width:480px){
   .ev{grid-template-columns:58px minmax(0,1fr)}
@@ -200,6 +243,33 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
       </div>
       <ul class="list" id="events"></ul>
     </section>
+
+    <section class="card pomc" aria-label="Pomodoro">
+      <div class="row between" style="flex-wrap:wrap;gap:10px"><h2>Pomodoro</h2><select class="in" id="poSubj" aria-label="Asignatura" style="width:auto;max-width:100%"></select></div>
+      <div class="po">
+        <div class="po-t num" id="poTime">25:00</div>
+        <div class="po-p" id="poPhase"></div>
+      </div>
+      <div class="po-b">
+        <button class="btn primary" id="poGo" type="button">Iniciar</button>
+        <button class="btn" id="poStop" type="button">Terminar y guardar</button>
+        <button class="btn ghost" id="poDrop" type="button">Descartar</button>
+      </div>
+      <details class="pset">
+        <summary>Ajustar tiempos</summary>
+        <div class="pg">
+          <label>Estudio (min)<input class="in num" id="pF" type="number" min="1" max="180" step="1"></label>
+          <label>Descanso (min)<input class="in num" id="pB" type="number" min="1" max="60" step="1"></label>
+          <label>Descanso largo (min)<input class="in num" id="pL" type="number" min="1" max="120" step="1"></label>
+          <label>Ciclos hasta el largo<input class="in num" id="pE" type="number" min="1" max="12" step="1"></label>
+        </div>
+      </details>
+    </section>
+
+    <section class="card stu" aria-label="Horas de estudio">
+      <div class="row between"><h2>Horas de estudio</h2><span class="num" id="stuTot" style="color:var(--muted);font-size:13px"></span></div>
+      <div id="stu"></div>
+    </section>
   </div>
 
   <div class="side">
@@ -215,6 +285,16 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
         <span class="row"><button class="btn ghost" id="importBtn" type="button">Importar .ics</button><button class="btn ghost" id="resetBtn" type="button" hidden>Horario original</button></span>
       </div>
       <input type="file" id="icsFile" accept=".ics,text/calendar" hidden>
+    </section>
+
+    <section class="card exm" aria-label="Exámenes">
+      <div class="row between"><h2>Exámenes</h2><button class="btn" id="addEx" type="button">+ Examen</button></div>
+      <ul class="list" id="exams"></ul>
+    </section>
+
+    <section class="card hab" aria-label="Hábitos">
+      <div class="row between"><h2>Hábitos</h2><button class="btn" id="addHb" type="button">+ Hábito</button></div>
+      <div id="habits"></div>
     </section>
 
     <section class="card chk" aria-label="Checklist">
@@ -239,6 +319,29 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
     <label>Token de GitHub<input class="in" id="sToken" type="password" autocomplete="off" placeholder="github_pat_..."></label>
     <p class="wx-msg" style="margin:0">Crear token: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Repositorio: solo aviso-diario. Permiso: Contents → Read and write.</p>
     <div class="acts"><button class="btn ghost" type="button" id="sOff">Desconectar</button><button class="btn" type="button" id="sCancel">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>
+</dialog>
+
+<dialog id="xdlg">
+  <form class="f" id="xForm" method="dialog">
+    <h3>Nuevo examen</h3>
+    <label>Asignatura<select class="in" id="xSubj"></select></label>
+    <label>Fecha<input class="in" id="xDate" type="date" required></label>
+    <div class="two">
+      <label>Hora (opcional)<input class="in" id="xTime" type="time"></label>
+      <label>Aula (opcional)<input class="in" id="xPlace" placeholder="Aula o edificio"></label>
+    </div>
+    <div class="acts"><button class="btn" type="button" id="xCancel">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>
+</dialog>
+
+<dialog id="hdlg">
+  <form class="f" id="hForm" method="dialog">
+    <h3 id="hTitle">Nuevo hábito</h3>
+    <label>Nombre<input class="in" id="hName" required placeholder="Ej: Leer, Gimnasio, Beber agua"></label>
+    <label>Objetivo diario en minutos (0 = solo sí/no)<input class="in" id="hMin" type="number" min="0" max="600" step="5" value="0"></label>
+    <div class="f" style="gap:6px"><span style="font-size:13px;color:var(--muted)">Días a la semana</span><div class="dp" id="hDays"></div></div>
+    <div class="acts"><button class="btn ghost" type="button" id="hDel" hidden>Borrar</button><button class="btn" type="button" id="hCancel">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
   </form>
 </dialog>
 
@@ -289,6 +392,7 @@ if(!tasks){tasks=[
   {id:'s1',text:'Repasar apuntes de TAL',done:false,date:''},
   {id:'s2',text:'Preparar la mochila para mañana',done:false,date:''},
   {id:'s3',text:'Comprobar entregas en PoliformaT',done:false,date:''}];store.set('pv_tasks',tasks)}
+let cfg=store.get('pv_cfg',[]),habits=store.get('pv_habits',[]),hlog=store.get('pv_hlog',[]),study=store.get('pv_study',[]),exams=store.get('pv_exams',[]);
 let sel=iso(new Date());
 let viewMonth=sel.slice(0,7);
 let byDate=new Map();
@@ -362,7 +466,7 @@ function renderCal(){
   $('#monthTitle').textContent=cap(new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' '));
   const first=new Date(y,m-1,1),lead=(first.getDay()+6)%7,today=iso(new Date());
   const start=new Date(y,m-1,1-lead);
-  const taskDates=new Set(tasks.filter(t=>!t.del&&!t.done&&t.date).map(t=>t.date));
+  const taskDates=new Set([...tasks.filter(t=>!t.del&&!t.done&&t.date).map(t=>t.date),...exams.filter(x=>!x.del).map(x=>x.date)]);
   let h=['L','M','X','J','V','S','D'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<42;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);const s=iso(d);
@@ -558,8 +662,9 @@ $('#wxRefresh').onclick=()=>loadWx(true);
 
 /* ---------- sincronización (GitHub) ---------- */
 const SY={token:store.get('pv_token',''),repo:store.get('pv_repo','ZileOne/aviso-diario'),timer:null,busy:false};
-const saveTasks=()=>{store.set('pv_tasks',tasks);queueSync()};
-const saveEvents=()=>{store.set('pv_events',custom);queueSync()};
+const COLS=[['tasks',()=>tasks,v=>{tasks=v},'pv_tasks'],['events',()=>custom,v=>{custom=v},'pv_events'],['habits',()=>habits,v=>{habits=v},'pv_habits'],['hlog',()=>hlog,v=>{hlog=v},'pv_hlog'],['study',()=>study,v=>{study=v},'pv_study'],['exams',()=>exams,v=>{exams=v},'pv_exams'],['cfg',()=>cfg,v=>{cfg=v},'pv_cfg']];
+const save=n=>{const c=COLS.find(x=>x[0]===n);store.set(c[3],c[1]());queueSync()};
+const saveTasks=()=>save('tasks'),saveEvents=()=>save('events');
 function setSync(msg,bad){const b=$('#syncBtn');b.textContent=msg;b.classList.toggle('bad',!!bad)}
 function queueSync(){if(!SY.token)return;clearTimeout(SY.timer);SY.timer=setTimeout(sync,1200)}
 const byId=a=>[...a].sort((x,y)=>x.id<y.id?-1:x.id>y.id?1:0);
@@ -591,13 +696,16 @@ async function sync(){
   try{
     for(let n=0;n<3;n++){
       const r=await ghGet();
-      const rt=r.data.tasks||[],re=r.data.events||[];
-      const t=mergeList(tasks,rt),e=mergeList(custom,re);
-      const changed=!sameList(t,tasks)||!sameList(e,custom);
-      tasks=t;custom=e;
-      if(changed){store.set('pv_tasks',tasks);store.set('pv_events',custom);renderAll()}
-      if(sameList(t,rt)&&sameList(e,re))break;
-      try{await ghPut({tasks:byId(t),events:byId(e)},r.sha);break}
+      let changed=false,equal=true;const out={};
+      for(const [k,get,set,sk] of COLS){
+        const rem=r.data[k]||[],m=mergeList(get(),rem);
+        if(!sameList(m,get())){changed=true;set(m);store.set(sk,m)}
+        if(!sameList(m,rem))equal=false;
+        out[k]=byId(m);
+      }
+      if(changed)renderAll();
+      if(equal)break;
+      try{await ghPut(out,r.sha);break}
       catch(er){if(er.status!==409&&er.status!==422)throw er}
     }
     setSync('Sincronizado '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
@@ -666,15 +774,236 @@ function renderBus(){
     <p class="note">Horarios oficiales del PDF de octubre 2026. Calculado con ${CFG.viajeIda} min de viaje a Catalunya, ${CFG.paradaClase} min andando parada-clase y 5 min de margen. La hora en Camí de Vera es estimada (3 min después de Blasco Ibáñez - Facultat de Geografia).</p>`;
 }
 
+/* ---------- utilidades ---------- */
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const HIDE_SUBJ=['IIP','TCO','FFI','AMA','MAD','FCO','EST','FOE'];
+const subjCodes=()=>Object.keys(base.subs).filter(c=>!HIDE_SUBJ.includes(c)).sort();
+const subjName=c=>(base.subs[c]&&base.subs[c].n)||c;
+const subjOpts=(sel0)=>'<option value="">General</option>'+subjCodes().map(c=>`<option value="${esc(c)}"${c===sel0?' selected':''}>${esc(c)} · ${esc(subjName(c))}</option>`).join('');
+const fmtMin=m=>m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?` ${p2(m%60)}`:''}`;
+function beep(){
+  try{const A=window.AudioContext||window.webkitAudioContext,c=new A();
+    [0,.25,.5].forEach(t=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=880;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(.2,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+t+.2);o.start(c.currentTime+t);o.stop(c.currentTime+t+.22)});
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([250,100,250,100,250])}catch(e){}
+}
+
+/* ---------- Pomodoro ---------- */
+const poCfg=()=>{const c=cfg.find(x=>x.id==='pomo'&&!x.del);return c?{f:c.f,b:c.b,l:c.l,every:c.every}:{f:25,b:5,l:15,every:4}};
+let PO=poCfg();
+let pomo=store.get('pv_pomo',null)||{phase:'f',left:PO.f*60000,end:0,n:0,subj:''};
+const poDur=ph=>(ph==='f'?PO.f:ph==='b'?PO.b:PO.l)*60000;
+const poLeft=()=>pomo.end?Math.max(0,pomo.end-Date.now()):pomo.left;
+const poSave=()=>store.set('pv_pomo',pomo);
+function addStudy(min,subj,day){
+  if(min<1)return;
+  study.push({id:uid('s'),date:day||iso(new Date()),subj:subj||'',min,u:Date.now()});
+  save('study');renderStudy();
+}
+function poNext(){
+  if(pomo.phase==='f'){
+    pomo.n++;pomo.phase=pomo.n%PO.every===0?'l':'b';
+    pomo.left=poDur(pomo.phase);pomo.end=Date.now()+pomo.left;
+  }else{pomo.phase='f';pomo.left=poDur('f');pomo.end=0}
+}
+function poComplete(){
+  if(pomo.phase==='f')addStudy(PO.f,pomo.subj,iso(new Date(pomo.end)));
+  beep();poNext();poSave();renderPomo();
+}
+function poFmt(ms){const s=Math.ceil(ms/1000);return `${p2(Math.floor(s/60))}:${p2(s%60)}`}
+function applyPo(n){
+  const old=poDur(pomo.phase);PO=n;
+  if(!pomo.end&&pomo.left===old)pomo.left=poDur(pomo.phase);
+  poSave();
+}
+function renderPomo(){
+  const nc=poCfg();if(JSON.stringify(nc)!==JSON.stringify(PO))applyPo(nc);
+  if(!$('.pset').contains(document.activeElement)){$('#pF').value=PO.f;$('#pB').value=PO.b;$('#pL').value=PO.l;$('#pE').value=PO.every}
+  const sel0=$('#poSubj');
+  if(sel0.dataset.k!==String(subjCodes().length)+pomo.subj){sel0.innerHTML=subjOpts(pomo.subj);sel0.dataset.k=String(subjCodes().length)+pomo.subj}
+  const run=!!pomo.end,f=pomo.phase==='f';
+  $('.po').classList.toggle('brk',!f);
+  $('#poTime').textContent=poFmt(poLeft());
+  $('#poPhase').textContent=(f?'Estudio':pomo.phase==='l'?'Descanso largo':'Descanso')+(f?` · ciclo ${pomo.n%PO.every+1} de ${PO.every}`:'')+(run?'':' · en pausa');
+  $('#poGo').textContent=run?'Pausar':(f&&poLeft()===poDur('f')?'Iniciar':'Reanudar');
+  $('#poStop').hidden=!f;$('#poDrop').hidden=!f;
+  if(!f){$('#poStop').hidden=false;$('#poStop').textContent='Saltar descanso';$('#poDrop').hidden=true}
+  else $('#poStop').textContent='Terminar y guardar';
+  document.title=run?`${poFmt(poLeft())} · Panel de vida`:'Panel de vida';
+}
+$('.pset').addEventListener('change',()=>{
+  const g=(id,lo,hi,d)=>{const v=Math.round(+$(id).value);return Math.min(hi,Math.max(lo,Number.isFinite(v)&&v?v:d))};
+  const n={f:g('#pF',1,180,25),b:g('#pB',1,60,5),l:g('#pL',1,120,15),every:g('#pE',1,12,4)};
+  const c=cfg.find(x=>x.id==='pomo');
+  if(c)Object.assign(c,n,{del:false,u:Date.now()});else cfg.push({id:'pomo',...n,u:Date.now()});
+  save('cfg');applyPo(poCfg());
+  $('#pF').value=n.f;$('#pB').value=n.b;$('#pL').value=n.l;$('#pE').value=n.every;
+  renderPomo();toast('Tiempos guardados');
+});
+$('#poSubj').onchange=e=>{pomo.subj=e.target.value;e.target.dataset.k=String(subjCodes().length)+pomo.subj;poSave()};
+$('#poGo').onclick=()=>{
+  if(pomo.end){pomo.left=poLeft();pomo.end=0}
+  else{pomo.end=Date.now()+pomo.left;beep0()}
+  poSave();renderPomo();
+};
+function beep0(){try{const A=window.AudioContext||window.webkitAudioContext;const c=new A();c.resume&&c.resume()}catch(e){}}
+$('#poStop').onclick=()=>{
+  if(pomo.phase==='f'){
+    const m=Math.floor((poDur('f')-poLeft())/60000);
+    addStudy(m,pomo.subj);toast(m>=1?`Guardados ${m} min`:'Menos de 1 min: no se guarda');
+    pomo.left=poDur('f');pomo.end=0;
+  }else{pomo.phase='f';pomo.left=poDur('f');pomo.end=0}
+  poSave();renderPomo();
+};
+$('#poDrop').onclick=()=>{pomo.left=poDur('f');pomo.end=0;poSave();renderPomo()};
+setInterval(()=>{
+  if(pomo.end&&Date.now()>=pomo.end)poComplete();
+  else if(pomo.end)$('#poTime').textContent=poFmt(poLeft()),document.title=`${poFmt(poLeft())} · Panel de vida`;
+},500);
+
+/* ---------- Horas de estudio ---------- */
+function weekStart(d){const x=fromISO(d),w=(x.getDay()+6)%7;return addDays(d,-w)}
+function renderStudy(){
+  const today=iso(new Date()),ws=weekStart(today),live=study.filter(s=>!s.del);
+  const agg={};
+  for(const s of live){
+    const k=s.subj||'';const a=agg[k]||(agg[k]={d:0,w:0,t:0});
+    a.t+=s.min;if(s.date>=ws&&s.date<=today)a.w+=s.min;if(s.date===today)a.d+=s.min;
+  }
+  const tot=Object.values(agg).reduce((x,a)=>({d:x.d+a.d,w:x.w+a.w}),{d:0,w:0});
+  $('#stuTot').textContent=`Hoy ${fmtMin(tot.d)} · Semana ${fmtMin(tot.w)}`;
+  const keys=Object.keys(agg).sort((a,b)=>agg[b].w-agg[a].w||agg[b].t-agg[a].t);
+  const max=Math.max(1,...keys.map(k=>agg[k].w));
+  let h='';
+  if(!keys.length)h='<p class="empty">Aún no hay sesiones. Completa un Pomodoro para empezar a registrar.</p>';
+  else{
+    h='<div class="sr h"><span>Asignatura</span><span class="num">Hoy</span><span class="num">Semana</span><span class="num">Total</span></div>'+
+    keys.map(k=>{const a=agg[k];return `<div class="sr"><span class="nm">${k?`<span class="tag">${esc(k)}</span> `:''}${esc(k?subjName(k):'General')}</span><span class="num">${a.d?fmtMin(a.d):'–'}</span><span class="num">${a.w?fmtMin(a.w):'–'}</span><span class="num">${fmtMin(a.t)}</span><div class="bar2"><i style="width:${Math.round(a.w/max*100)}%"></i></div></div>`}).join('');
+  }
+  const td=live.filter(s=>s.date===today);
+  if(td.length)h+='<div class="sess">Sesiones de hoy'+td.map(s=>`<div><span>${s.subj?esc(s.subj):'General'} · ${fmtMin(s.min)}</span><button class="x" type="button" data-sd="${esc(s.id)}" aria-label="Borrar sesión">×</button></div>`).join('')+'</div>';
+  $('#stu').innerHTML=h;
+}
+$('#stu').addEventListener('click',e=>{
+  const b=e.target.closest('[data-sd]');if(!b)return;
+  const s=study.find(x=>x.id===b.dataset.sd);if(s){s.del=true;s.u=Date.now()}save('study');renderStudy();
+});
+
+/* ---------- Exámenes ---------- */
+const daysTo=d=>Math.round((fromISO(d)-fromISO(iso(new Date())))/864e5);
+function renderExams(){
+  const list=exams.filter(x=>!x.del&&x.date>=iso(new Date())).sort((a,b)=>(a.date+(a.time||'99'))<(b.date+(b.time||'99'))?-1:1);
+  if(!list.length){$('#exams').innerHTML='<li class="empty">Sin exámenes próximos. Añade uno con “+ Examen”.</li>';return}
+  $('#exams').innerHTML=list.map(x=>{
+    const n=daysTo(x.date),cls=n<=3?'urgent':n<=7?'soon':'';
+    return `<li class="xr ${cls}"><div class="dd num">${n===0?'HOY':n===1?'1':n}<small>${n===0?'':n===1?'día':'días'}</small></div>
+      <div class="t"><div class="ev-n">${x.subj?esc(x.subj)+' · ':''}${esc(x.subj?subjName(x.subj):'Examen')}</div><small class="num">${esc(cap(fmtShort(x.date)))}${x.time?' · '+esc(x.time):''}${x.place?' · '+esc(x.place):''}</small></div>
+      <button class="x" type="button" data-xd="${esc(x.id)}" aria-label="Borrar examen">×</button></li>`;
+  }).join('');
+}
+const xdlg=$('#xdlg');
+$('#addEx').onclick=()=>{$('#xForm').reset();$('#xSubj').innerHTML=subjOpts('');$('#xDate').value=iso(new Date());if(xdlg.showModal)xdlg.showModal();else xdlg.setAttribute('open','')};
+$('#xCancel').onclick=()=>xdlg.close();
+$('#xForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  exams.push({id:uid('x'),subj:$('#xSubj').value,date:$('#xDate').value,time:$('#xTime').value,place:$('#xPlace').value.trim(),u:Date.now()});
+  save('exams');xdlg.close();renderExams();renderCal();toast('Examen guardado');
+});
+$('#exams').addEventListener('click',e=>{
+  const b=e.target.closest('[data-xd]');if(!b)return;
+  const x=exams.find(y=>y.id===b.dataset.xd);if(x){x.del=true;x.u=Date.now()}save('exams');renderExams();renderCal();
+});
+
+/* ---------- Hábitos ---------- */
+const DN=['D','L','M','X','J','V','S'];
+const DORDER=[1,2,3,4,5,6,0];
+const hneed=h=>h.min>0?h.min:1;
+const hval=(h,day)=>{const r=hlog.find(x=>x.id===h.id+'|'+day);return r?r.v:0};
+const hdone=(h,day)=>hval(h,day)>=hneed(h);
+function hset(h,day,v){
+  if(day<h.from&&v>0){h.from=day;h.u=Date.now();save('habits')}
+  const id=h.id+'|'+day,r=hlog.find(x=>x.id===id);
+  if(r){r.v=v;r.u=Date.now()}else hlog.push({id,h:h.id,date:day,v,u:Date.now()});
+  save('hlog');renderHabits();
+}
+function hstreak(h){
+  const today=iso(new Date());let s=0;
+  for(let i=0;i<730;i++){
+    const day=addDays(today,-i);if(day<h.from)break;
+    if(!h.days.includes(fromISO(day).getDay()))continue;
+    if(hdone(h,day))s++;else if(i===0)continue;else break;
+  }
+  return s;
+}
+function hbest(h){
+  const today=iso(new Date());let best=0,cur=0;
+  for(let day=h.from;day<=today;day=addDays(day,1)){
+    if(!h.days.includes(fromISO(day).getDay()))continue;
+    if(hdone(h,day)){cur++;best=Math.max(best,cur)}else if(day!==today)cur=0;
+  }
+  return best;
+}
+function renderHabits(){
+  const today=iso(new Date()),list=habits.filter(h=>!h.del);
+  if(!list.length){$('#habits').innerHTML='<p class="empty">Crea tu primer hábito con “+ Hábito”: nombre, minutos al día (opcional) y días de la semana.</p>';return}
+  $('#habits').innerHTML=list.map(h=>{
+    const sch=h.days.includes(fromISO(today).getDay()),done=hdone(h,today),st=hstreak(h),best=hbest(h);
+    const dsc=h.days.length===7?'Todos los días':DORDER.filter(d=>h.days.includes(d)).map(d=>DN[d]).join(' · ');
+    let dots='';
+    for(let i=6;i>=0;i--){
+      const day=addDays(today,-i),on=h.days.includes(fromISO(day).getDay()),d=day>=h.from&&hdone(h,day);
+      dots+=`<button type="button" class="dot ${d?'ok':on&&day<today&&day>=h.from?'miss':''} ${on?'':'off'} ${i===0?'tod':''}" data-hd="${esc(h.id)}" data-day="${day}" aria-label="${esc(h.name)} ${fmtShort(day)}${d?' hecho':''}"></button>`;
+    }
+    const mi=h.min>0?`<input class="in mi num" type="number" min="0" max="600" step="5" value="${hval(h,today)||''}" placeholder="0" data-hm="${esc(h.id)}" aria-label="Minutos hoy"><span class="mn">/ ${h.min} min</span>`:'';
+    return `<div class="hb"><div class="hb-top"><button class="ck ${done?'on':''}" type="button" data-hc="${esc(h.id)}" aria-label="Marcar ${esc(h.name)}"></button>
+      <button class="hb-name" type="button" data-he="${esc(h.id)}">${esc(h.name)}<small>${esc(dsc)}${h.min>0?' · '+h.min+' min':''}${sch?'':' · hoy no toca'}</small></button>
+      <div class="stk num">${st} ${st===1?'día':'días'}<small>mejor ${best}</small></div></div>
+      <div class="hb-bot">${dots}${mi}</div></div>`;
+  }).join('');
+}
+$('#habits').addEventListener('click',e=>{
+  const today=iso(new Date());
+  let b=e.target.closest('[data-hc]');
+  if(b){const h=habits.find(x=>x.id===b.dataset.hc);hset(h,today,hdone(h,today)?0:hneed(h));return}
+  b=e.target.closest('[data-hd]');
+  if(b){const h=habits.find(x=>x.id===b.dataset.hd),day=b.dataset.day;hset(h,day,hdone(h,day)?0:hneed(h));return}
+  b=e.target.closest('[data-he]');
+  if(b)openHabit(habits.find(x=>x.id===b.dataset.he));
+});
+$('#habits').addEventListener('change',e=>{
+  const i=e.target.closest('[data-hm]');if(!i)return;
+  const h=habits.find(x=>x.id===i.dataset.hm);hset(h,iso(new Date()),Math.max(0,Math.round(+i.value||0)));
+});
+const hdlg=$('#hdlg');let hEdit=null;
+function drawDays(sel0){$('#hDays').innerHTML=DORDER.map(d=>`<button type="button" data-d="${d}" class="${sel0.includes(d)?'on':''}" aria-pressed="${sel0.includes(d)}">${DN[d]}</button>`).join('')}
+$('#hDays').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;b.classList.toggle('on');b.setAttribute('aria-pressed',b.classList.contains('on'))});
+function openHabit(h){
+  hEdit=h||null;$('#hTitle').textContent=h?'Editar hábito':'Nuevo hábito';
+  $('#hName').value=h?h.name:'';$('#hMin').value=h?h.min:0;drawDays(h?h.days:[0,1,2,3,4,5,6]);$('#hDel').hidden=!h;
+  if(hdlg.showModal)hdlg.showModal();else hdlg.setAttribute('open','');$('#hName').focus();
+}
+$('#addHb').onclick=()=>openHabit(null);
+$('#hCancel').onclick=()=>hdlg.close();
+$('#hDel').onclick=()=>{if(hEdit){hEdit.del=true;hEdit.u=Date.now();save('habits');renderHabits()}hdlg.close()};
+$('#hForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const days=[...$('#hDays').querySelectorAll('.on')].map(b=>+b.dataset.d);
+  if(!days.length){toast('Elige al menos un día');return}
+  const name=$('#hName').value.trim(),min=Math.max(0,Math.round(+$('#hMin').value||0));
+  if(hEdit){Object.assign(hEdit,{name,min,days,u:Date.now()})}
+  else habits.push({id:uid('h'),name,min,days,from:iso(new Date()),u:Date.now()});
+  save('habits');hdlg.close();renderHabits();
+});
+
 /* ---------- arranque ---------- */
-function renderAll(){renderDay();renderBus();renderCal();renderTasks()}
+function renderAll(){renderDay();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo()}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 tickHeader();renderAll();loadWx(false);
 if(SY.token)sync();else setSync('Activar sincronización');
 setInterval(sync,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();loadWx(false)}});
 window.addEventListener('online',sync);
-setInterval(()=>{tickHeader();if(sel===iso(new Date())){renderDay();renderBus()}},30000);
+setInterval(()=>{tickHeader();if(sel===iso(new Date())){renderDay();renderBus()}renderHabits();renderExams()},60000);
 setInterval(()=>loadWx(true),30*60*1000);
 </script>
 </body>
