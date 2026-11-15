@@ -223,9 +223,32 @@ dialog h3{font:600 18px var(--font-d);margin:0 0 14px}
   .b .tag{grid-column:2;justify-self:start}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#intro{display:none;position:fixed;inset:0;z-index:1000;background:#000;color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+html.intro-on #intro{display:flex;animation:inOut .5s ease 2.3s forwards}
+#intro img{width:min(52vw,210px);height:auto;aspect-ratio:1;image-rendering:pixelated;animation:inCard 1.15s cubic-bezier(.2,.85,.25,1.08) both,inFloat 2.4s ease-in-out 1.15s infinite}
+.in-t{font:700 30px var(--font-d);letter-spacing:.03em;opacity:0;animation:inText .7s ease .85s forwards}
+.in-s{font-size:14px;color:var(--muted);opacity:0;animation:inText .7s ease 1.05s forwards;min-height:1.4em}
+.in-bar{width:132px;height:3px;border-radius:99px;background:#1b2330;overflow:hidden;margin-top:6px}
+.in-bar i{display:block;height:100%;width:0;background:var(--accent);animation:inBar 1.3s ease .9s forwards}
+@keyframes inCard{0%{opacity:0;transform:perspective(900px) rotateY(-540deg) scale(.25)}45%{opacity:1}100%{opacity:1;transform:perspective(900px) rotateY(0deg) scale(1)}}
+@keyframes inFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes inText{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes inBar{to{width:100%}}
+@keyframes inOut{to{opacity:0;visibility:hidden;transform:scale(1.05)}}
 </style>
+<script>
+(function(){try{
+  var mq=function(q){return window.matchMedia&&window.matchMedia(q).matches};
+  var st=mq('(display-mode: standalone)')||window.navigator.standalone===true;
+  var nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];
+  var rel=nav&&nav.type==='reload';
+  if(st&&mq('(pointer: coarse)')&&!rel&&!mq('(prefers-reduced-motion: reduce)'))document.documentElement.classList.add('intro-on');
+}catch(e){}})();
+</script>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><img src="icon-512.png" alt="" width="210" height="210"><div class="in-t">Panel de vida</div><div class="in-s" id="inSub"></div><div class="in-bar"><i></i></div></div>
 <div class="app">
   <header>
     <div>
@@ -1089,6 +1112,8 @@ $('#wkNow').onclick=()=>goDay(iso(new Date()));
 function renderAll(){renderDay();renderWeek();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo()}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 tickHeader();renderAll();loadWx(false);
+$('#inSub').textContent=$('#hello').textContent;
+$('#intro').addEventListener('click',e=>{e.currentTarget.style.animation='inOut .25s ease forwards'});
 if(SY.token)sync();else setSync('Activar sincronización');
 setInterval(sync,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();loadWx(false)}});
