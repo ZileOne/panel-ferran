@@ -1549,33 +1549,49 @@ $('#zkD').onclick=()=>{store.set('pv_gkey','');dzK.close();toast('Clave borrada'
 $('#zkForm').addEventListener('submit',e=>{e.preventDefault();store.set('pv_gkey',$('#zkK').value.trim());store.set('pv_gmodel',$('#zkM').value.trim());dzK.close();toast('Guardado')});
 async function gemini(system,contents,json){
   const key=store.get('pv_gkey','');if(!key)throw {code:'nokey'};
-  const pref=store.get('pv_gmodel','')||'gemini-flash-latest';
-  const models=[pref,...['gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'].filter(m=>m!==pref)];
+  const pref=store.get('pv_gmodel','')||store.get('pv_gauto','')||'gemini-flash-latest';
   const body=JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}});
-  let last={code:'net'};
-  for(let i=0;i<models.length;i++){
+  const H={'Content-Type':'application/json','x-goog-api-key':key};
+  let worst=null;
+  const note=c=>{if(!worst||worst.code===404)worst={code:c}};
+  async function tryModel(m){
     for(let t=0;t<2;t++){
-      let r;
-      const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
-      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[i])}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body,signal:ac.signal})}
-      catch(e){clearTimeout(tm);last={code:e&&e.name==='AbortError'?'timeout':'net'};break}
+      const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);let r;
+      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:'POST',headers:H,body,signal:ac.signal})}
+      catch(e){clearTimeout(tm);note(e&&e.name==='AbortError'?'timeout':'net');return null}
       clearTimeout(tm);
       if(r.ok){
         const j=await r.json();
         const x=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
-        if(x)return x;last={code:'empty'};break;
+        if(x){store.set('pv_gauto',m);return x}note('empty');return null;
       }
-      last={code:r.status};
-      if(r.status===400||r.status===401||r.status===403)throw last;
+      note(r.status);
+      if(r.status===400||r.status===401||r.status===403)throw {code:r.status};
       if(r.status===503||r.status===500||r.status===429){await new Promise(z=>setTimeout(z,1200));continue}
-      break;
+      return null;
     }
+    return null;
   }
-  throw last;
+  const tried=new Set();
+  for(const m of [pref,'gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite']){
+    if(tried.has(m))continue;tried.add(m);
+    const x=await tryModel(m);if(x)return x;
+  }
+  if(!worst||worst.code===404){
+    let names=[];
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:H});
+      if(r.ok){const j=await r.json();names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/^gemini-/.test(n)&&!/image|tts|live|audio|embed|vision|robotics|computer/.test(n))}
+    }catch(e){}
+    names.sort((a,b)=>(/flash/.test(b)-/flash/.test(a))||(/lite/.test(a)-/lite/.test(b)));
+    for(const m of names.slice(0,5)){if(tried.has(m))continue;tried.add(m);const x=await tryModel(m);if(x)return x}
+    if(!worst||worst.code===404)throw {code:'nomodel',names:names.slice(0,6)};
+  }
+  throw worst;
 }
 function gErr(e){
   const c=e&&e.code;
-  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='timeout'?'La IA no responde (tiempo agotado). Reintenta.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
+  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404||c==='nomodel'?'Ningún modelo disponible con tu clave'+(e.names&&e.names.length?'. Modelos que ve tu clave: '+e.names.join(', ')+'. Escribe uno en Clave de IA.':'. Comprueba que la clave es de Google AI Studio.'):c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='timeout'?'La IA no responde (tiempo agotado). Reintenta.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
 }
 const dzA=$('#dzA');
 $('#svAddAI').onclick=()=>{svAI=null;$('#zaM').value=defMeal();$('#zaT').value='';$('#zaR').innerHTML='';$('#zaOk').disabled=true;dlgOpen(dzA)};
