@@ -1549,19 +1549,31 @@ $('#zkD').onclick=()=>{store.set('pv_gkey','');dzK.close();toast('Clave borrada'
 $('#zkForm').addEventListener('submit',e=>{e.preventDefault();store.set('pv_gkey',$('#zkK').value.trim());store.set('pv_gmodel',$('#zkM').value.trim());dzK.close();toast('Guardado')});
 async function gemini(system,contents,json){
   const key=store.get('pv_gkey','');if(!key)throw {code:'nokey'};
-  const model=store.get('pv_gmodel','')||'gemini-flash-latest';
-  const body={systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}};
-  let r;
-  try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)})}
-  catch(e){throw {code:'net'}}
-  if(!r.ok)throw {code:r.status};
-  const j=await r.json();
-  const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
-  if(!t)throw {code:'empty'};return t;
+  const pref=store.get('pv_gmodel','')||'gemini-flash-latest';
+  const models=[pref,...['gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'].filter(m=>m!==pref)];
+  const body=JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}});
+  let last={code:'net'};
+  for(let i=0;i<models.length;i++){
+    for(let t=0;t<2;t++){
+      let r;
+      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[i])}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body})}
+      catch(e){last={code:'net'};break}
+      if(r.ok){
+        const j=await r.json();
+        const x=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
+        if(x)return x;last={code:'empty'};break;
+      }
+      last={code:r.status};
+      if(r.status===400||r.status===401||r.status===403)throw last;
+      if(r.status===503||r.status===500||r.status===429){await new Promise(z=>setTimeout(z,1200));continue}
+      break;
+    }
+  }
+  throw last;
 }
 function gErr(e){
   const c=e&&e.code;
-  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
+  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
 }
 const dzA=$('#dzA');
 $('#svAddAI').onclick=()=>{svAI=null;$('#zaM').value=defMeal();$('#zaT').value='';$('#zaR').innerHTML='';$('#zaOk').disabled=true;dlgOpen(dzA)};
