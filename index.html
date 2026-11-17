@@ -1556,8 +1556,10 @@ async function gemini(system,contents,json){
   for(let i=0;i<models.length;i++){
     for(let t=0;t<2;t++){
       let r;
-      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[i])}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body})}
-      catch(e){last={code:'net'};break}
+      const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);
+      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(models[i])}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body,signal:ac.signal})}
+      catch(e){clearTimeout(tm);last={code:e&&e.name==='AbortError'?'timeout':'net'};break}
+      clearTimeout(tm);
       if(r.ok){
         const j=await r.json();
         const x=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
@@ -1573,7 +1575,7 @@ async function gemini(system,contents,json){
 }
 function gErr(e){
   const c=e&&e.code;
-  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
+  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='timeout'?'La IA no responde (tiempo agotado). Reintenta.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
 }
 const dzA=$('#dzA');
 $('#svAddAI').onclick=()=>{svAI=null;$('#zaM').value=defMeal();$('#zaT').value='';$('#zaR').innerHTML='';$('#zaOk').disabled=true;dlgOpen(dzA)};
