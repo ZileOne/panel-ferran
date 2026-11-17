@@ -236,6 +236,72 @@ html.intro-on #intro{display:flex;animation:inOut .5s ease 2.3s forwards}
 @keyframes inText{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes inBar{to{width:100%}}
 @keyframes inOut{to{opacity:0;visibility:hidden;transform:scale(1.05)}}
+
+/* ---------- salud ---------- */
+[hidden]{display:none!important}
+.tabs{grid-column:1/-1;display:flex;gap:6px}
+.tabs button{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 16px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+#salud{display:none;grid-column:1/-1;min-width:0}
+.app.sv #salud{display:block}
+.app.sv .col,.app.sv .side,.app.sv .wk{display:none!important}
+.svbar{margin-bottom:16px;flex-wrap:wrap}
+.svg{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.svc{display:flex;flex-direction:column;gap:16px;min-width:0}
+.svlock{max-width:320px;margin:20px auto;text-align:center;display:grid;gap:14px;justify-items:center}
+.pdots{display:flex;gap:12px}
+.pdots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted)}
+.pdots i.f{background:var(--accent);border-color:var(--accent)}
+.pdots.bad{animation:pshake .3s}
+@keyframes pshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:10px}
+.pad button{height:54px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);font:600 20px var(--font-d)}
+.pad button:active{background:var(--accent-soft)}
+.sh2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.sbig{font:700 34px/1 var(--font-d)}
+.sbig small{font:500 14px var(--font-b);color:var(--muted)}
+.sbig.over{color:var(--bad)}
+.sbar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:99px;background:var(--accent);max-width:100%}
+.sbar i.ok{background:var(--ok)}.sbar i.warn{background:var(--now)}.sbar i.bad{background:var(--bad)}
+.mrow{display:grid;gap:4px;margin-top:10px}
+.mrow .l{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.mrow .l b{color:var(--fg);font-weight:600}
+.meal{margin-top:12px}
+.meal h4{margin:0 0 4px;font:600 13px var(--font-d);display:flex;justify-content:space-between;color:var(--muted)}
+.fi{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.fi .n{overflow-wrap:anywhere}
+.fi .m{color:var(--muted);font-size:12px}
+.fi .k{font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{background:var(--surface2);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12.5px;color:var(--fg)}
+.chip:hover{border-color:var(--accent)}
+.seg{display:flex;gap:4px}
+.seg button{background:none;border:1px solid var(--line);border-radius:8px;padding:3px 9px;font-size:12.5px;color:var(--muted)}
+.seg button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.svs{width:100%;height:auto;display:block;margin-top:8px}
+.cg{stroke:var(--line);stroke-width:1}.ce{stroke:var(--accent);fill:none;stroke-width:2}.cl{stroke:var(--ok);stroke-dasharray:4 3;stroke-width:1.2}
+.cp{fill:var(--muted)}.ct{fill:var(--muted);font-size:9px}
+.stat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.stat div{background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--muted)}
+.stat b{display:block;font:600 17px var(--font-d);color:var(--fg)}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;margin:10px 0}
+.msg{padding:8px 11px;border-radius:12px;font-size:14px;max-width:92%;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--accent-soft)}
+.msg.a{align-self:flex-start;background:var(--surface2)}
+.msg.e{align-self:flex-start;background:var(--now-soft);color:var(--now)}
+.sadv{background:var(--now-soft);color:var(--now);border-radius:10px;padding:8px 12px;font-size:13.5px;margin-top:10px}
+.sgl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.sgl div{background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--muted)}
+.sgl b{display:block;font:600 17px var(--font-d);color:var(--fg)}
+.f textarea.in{resize:vertical;min-height:70px}
+.f select.in{appearance:auto}
+.airow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}
+@media (max-width:860px){
+  .svg{display:flex;flex-direction:column}
+  .svc{display:contents}
+  .z1{order:1}.z2{order:2}.z3{order:3}.z4{order:4}.z5{order:5}.z6{order:6}.z7{order:7}
+}
 </style>
 <script>
 (function(){try{
@@ -257,6 +323,7 @@ html.intro-on #intro{display:flex;animation:inOut .5s ease 2.3s forwards}
     </div>
     <div class="hr"><button class="btn ghost" id="syncBtn" type="button">Activar sincronización</button><div class="clock num" id="clock"></div></div>
   </header>
+  <nav class="tabs" id="tabs"><button class="on" data-tab="p" type="button">Panel</button><button data-tab="s" type="button">Salud</button></nav>
 
   <div class="col">
     <section class="card wxc" aria-label="Tiempo">
@@ -363,7 +430,92 @@ html.intro-on #intro{display:flex;animation:inOut .5s ease 2.3s forwards}
     </div>
     <div class="wk-sc"><div class="wk-g" id="wk"></div></div>
   </section>
+
+  <section id="salud" aria-label="Salud">
+    <div class="card svlock" id="svLock" hidden>
+      <h2>Salud</h2>
+      <div class="pdots" id="pdots"><i></i><i></i><i></i><i></i></div>
+      <div class="pad" id="pad"></div>
+    </div>
+    <div id="svMain" hidden>
+      <div class="svbar row between">
+        <div class="row"><button class="btn icon" id="svPrev" type="button" aria-label="Día anterior">‹</button><b id="svDayL"></b><button class="btn icon" id="svNext" type="button" aria-label="Día siguiente">›</button><button class="btn ghost" id="svToday" type="button">Hoy</button></div>
+        <button class="btn" id="svLockNow" type="button">Bloquear</button>
+      </div>
+      <div class="svg">
+        <div class="svc">
+          <section class="card z1" aria-label="Hoy"><div class="sh2"><h2>Resumen del día</h2></div><div id="svSum"></div></section>
+          <section class="card z2" aria-label="Comidas">
+            <div class="sh2"><h2>Comidas</h2><div class="row"><button class="btn" id="svAddF" type="button">+ Comida</button><button class="btn primary" id="svAddAI" type="button">Con IA</button></div></div>
+            <div id="svFoods"></div><div class="chips" id="svRec"></div>
+          </section>
+          <section class="card z5" aria-label="Asistente IA">
+            <div class="sh2"><h2>Asistente IA</h2><button class="btn ghost" id="svChatClr" type="button">Limpiar</button></div>
+            <div class="chips" id="svQuick"></div>
+            <div class="chat" id="svChat" aria-live="polite"></div>
+            <form class="row" id="svChatF"><input class="in" id="svChatI" placeholder="Pregunta sobre dieta o ejercicio" autocomplete="off"><button class="btn primary" type="submit">Enviar</button></form>
+          </section>
+        </div>
+        <div class="svc">
+          <section class="card z3" aria-label="Peso">
+            <div class="sh2"><h2>Peso</h2><div class="seg" id="svRange"><button data-r="30" type="button" class="on">30 d</button><button data-r="90" type="button">90 d</button><button data-r="0" type="button">Todo</button></div></div>
+            <form class="row" id="svWF"><input class="in" id="svWI" type="number" step="0.1" min="30" max="300" inputmode="decimal" placeholder="kg" aria-label="Peso en kg"><button class="btn primary" type="submit">Guardar</button></form>
+            <div id="svChart"></div><div id="svWStat"></div><div id="svWList"></div>
+          </section>
+          <section class="card z6" aria-label="Objetivos"><div class="sh2"><h2>Objetivos diarios</h2></div><div id="svGoals"></div></section>
+          <section class="card z4" aria-label="Actividad">
+            <div class="sh2"><h2>Actividad</h2><button class="btn" id="svAddE" type="button">+ Ejercicio</button></div>
+            <form class="row" id="svSF"><input class="in" id="svSI" type="number" step="1" min="0" max="100000" inputmode="numeric" placeholder="Pasos del día" aria-label="Pasos"><button class="btn primary" type="submit">Guardar</button></form>
+            <div id="svAct"></div>
+          </section>
+          <section class="card z7" aria-label="Ajustes de salud">
+            <div class="sh2"><h2>Ajustes</h2></div>
+            <div class="row" style="flex-wrap:wrap"><button class="btn" id="svBP" type="button">Perfil y metas</button><button class="btn" id="svBK" type="button">Clave de IA</button><button class="btn" id="svBN" type="button">Cambiar PIN</button></div>
+            <p class="mn" style="margin:10px 0 0">Orientativo, no sustituye a un profesional sanitario. El PIN solo bloquea la vista, no cifra los datos.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
+
+<dialog id="dzF"><form class="f" id="zfForm" method="dialog"><h3>Añadir comida</h3>
+  <label>Comida<select class="in" id="zfM"></select></label>
+  <label>Nombre<input class="in" id="zfN" required maxlength="80" autocomplete="off"></label>
+  <div class="two"><label>kcal<input class="in" id="zfK" type="number" min="0" max="5000" step="1" inputmode="numeric" required></label><label>Proteína (g)<input class="in" id="zfP" type="number" min="0" max="500" step="0.1" inputmode="decimal"></label></div>
+  <div class="two"><label>Carbohidratos (g)<input class="in" id="zfC" type="number" min="0" max="800" step="0.1" inputmode="decimal"></label><label>Grasa (g)<input class="in" id="zfG" type="number" min="0" max="500" step="0.1" inputmode="decimal"></label></div>
+  <div class="acts"><button class="btn" type="button" id="zfX">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></dialog>
+
+<dialog id="dzA"><form class="f" id="zaForm" method="dialog"><h3>Añadir con IA</h3>
+  <label>Comida<select class="in" id="zaM"></select></label>
+  <label>¿Qué has comido?<textarea class="in" id="zaT" maxlength="500" placeholder="Ej: 2 huevos fritos, 2 rebanadas de pan y un café con leche"></textarea></label>
+  <div id="zaR"></div>
+  <div class="acts"><button class="btn" type="button" id="zaX">Cancelar</button><button class="btn" type="button" id="zaGo">Estimar</button><button class="btn primary" type="submit" id="zaOk" disabled>Añadir</button></div></form></dialog>
+
+<dialog id="dzE"><form class="f" id="zeForm" method="dialog"><h3>Añadir ejercicio</h3>
+  <label>Tipo<select class="in" id="zeT"></select></label>
+  <div class="two"><label>Minutos<input class="in" id="zeM" type="number" min="1" max="600" step="1" inputmode="numeric" required></label><label>kcal (estimadas)<input class="in" id="zeK" type="number" min="0" max="5000" step="1" inputmode="numeric"></label></div>
+  <div class="acts"><button class="btn" type="button" id="zeX">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></dialog>
+
+<dialog id="dzP"><form class="f" id="zpForm" method="dialog"><h3>Perfil y metas</h3>
+  <div class="two"><label>Sexo<select class="in" id="zpS"><option value="M">Hombre</option><option value="F">Mujer</option></select></label><label>Edad<input class="in" id="zpA" type="number" min="18" max="100" step="1" inputmode="numeric" required></label></div>
+  <div class="two"><label>Altura (cm)<input class="in" id="zpH" type="number" min="120" max="230" step="1" inputmode="numeric" required></label><label>Peso actual (kg)<input class="in" id="zpW" type="number" min="30" max="300" step="0.1" inputmode="decimal"></label></div>
+  <div class="two"><label>Peso meta (kg)<input class="in" id="zpG" type="number" min="30" max="300" step="0.1" inputmode="decimal" required></label><label>Pasos objetivo<input class="in" id="zpP" type="number" min="1000" max="40000" step="500" inputmode="numeric"></label></div>
+  <label>Actividad diaria (sin contar ejercicio)<select class="in" id="zpC"></select></label>
+  <label>Ritmo de pérdida<select class="in" id="zpR"><option value="0.25">Suave · 0,25 kg/semana</option><option value="0.5">Normal · 0,5 kg/semana</option><option value="0.75">Rápido · 0,75 kg/semana</option></select></label>
+  <label>Alimentos que no te gustan (opcional)<input class="in" id="zpD" maxlength="120" autocomplete="off"></label>
+  <p class="mn" id="zpE" style="margin:0;color:var(--bad)"></p>
+  <div class="acts"><button class="btn" type="button" id="zpX">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></dialog>
+
+<dialog id="dzK"><form class="f" id="zkForm" method="dialog"><h3>Clave de IA (Gemini)</h3>
+  <p class="wx-msg" style="margin:0">Crea una clave gratis en aistudio.google.com/apikey. Se guarda solo en este dispositivo. En el plan gratuito Google puede usar lo que envíes para mejorar sus modelos.</p>
+  <label>Clave API<input class="in" id="zkK" type="password" autocomplete="off" placeholder="AIza..."></label>
+  <label>Modelo<input class="in" id="zkM" autocomplete="off" placeholder="gemini-flash-latest"></label>
+  <div class="acts"><button class="btn ghost" type="button" id="zkD">Borrar clave</button><button class="btn" type="button" id="zkX">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></dialog>
+
+<dialog id="dzN"><form class="f" id="znForm" method="dialog"><h3>Cambiar PIN</h3>
+  <label>Nuevo PIN (4 dígitos)<input class="in" id="znP" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required autocomplete="off"></label>
+  <div class="acts"><button class="btn" type="button" id="znX">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div></form></dialog>
 
 <dialog id="sdlg">
   <form class="f" id="sForm" method="dialog">
@@ -716,7 +868,7 @@ $('#wxRefresh').onclick=()=>loadWx(true);
 
 /* ---------- sincronización (GitHub) ---------- */
 const SY={token:store.get('pv_token',''),repo:store.get('pv_repo','ZileOne/aviso-diario'),timer:null,busy:false};
-const COLS=[['tasks',()=>tasks,v=>{tasks=v},'pv_tasks'],['events',()=>custom,v=>{custom=v},'pv_events'],['habits',()=>habits,v=>{habits=v},'pv_habits'],['hlog',()=>hlog,v=>{hlog=v},'pv_hlog'],['study',()=>study,v=>{study=v},'pv_study'],['exams',()=>exams,v=>{exams=v},'pv_exams'],['cfg',()=>cfg,v=>{cfg=v},'pv_cfg']];
+const COLS=[['tasks',()=>tasks,v=>{tasks=v},'pv_tasks'],['events',()=>custom,v=>{custom=v},'pv_events'],['habits',()=>habits,v=>{habits=v},'pv_habits'],['hlog',()=>hlog,v=>{hlog=v},'pv_hlog'],['study',()=>study,v=>{study=v},'pv_study'],['exams',()=>exams,v=>{exams=v},'pv_exams'],['cfg',()=>cfg,v=>{cfg=v},'pv_cfg'],['hprof',()=>hprof,v=>{hprof=v},'pv_hprof'],['wlog',()=>wlog,v=>{wlog=v},'pv_wlog'],['flog',()=>flog,v=>{flog=v},'pv_flog'],['wat',()=>wat,v=>{wat=v},'pv_wat'],['act',()=>act,v=>{act=v},'pv_act']];
 const save=n=>{const c=COLS.find(x=>x[0]===n);store.set(c[3],c[1]());queueSync()};
 const saveTasks=()=>save('tasks'),saveEvents=()=>save('events');
 function setSync(msg,bad){const b=$('#syncBtn');b.textContent=msg;b.classList.toggle('bad',!!bad)}
@@ -1108,8 +1260,362 @@ $('#wkPrev').onclick=()=>goDay(addDays(sel,-7));
 $('#wkNext').onclick=()=>goDay(addDays(sel,7));
 $('#wkNow').onclick=()=>goDay(iso(new Date()));
 
+/* ---------- salud ---------- */
+let hprof=store.get('pv_hprof',[]),wlog=store.get('pv_wlog',[]),flog=store.get('pv_flog',[]),wat=store.get('pv_wat',[]),act=store.get('pv_act',[]);
+const SV_ACT={sed:['Sedentario (poco movimiento)',1.2],lig:['Ligero (de pie / camina algo)',1.375],mod:['Moderado (activo casi todo el día)',1.55],act:['Muy activo',1.725]};
+const SV_MET={'Caminar':3.5,'Caminar rápido':4.5,'Correr':9,'Fuerza / gimnasio':5,'Bici':7,'Natación':7,'Otro':5};
+const SV_MEALS=[['des','Desayuno'],['com','Comida'],['mer','Merienda'],['cen','Cena'],['otr','Otros']];
+const PIN_DEF='78668a4c2abae3c63c6ac9c0ecb7367e1a222382c8955aa437372401cec1592e';
+const SL={ok:false,buf:'',tab:'p'};
+let svDay=iso(new Date()),svRange=30,svChat=[],svAI=null,svBusy=false;
+const L=a=>a.filter(x=>!x.del);
+const put=(arr,col,o)=>{o.u=Date.now();const i=arr.findIndex(x=>x.id===o.id);if(i>=0)arr[i]=o;else arr.push(o);save(col)};
+const rmv=(arr,col,id)=>{const o=arr.find(x=>x.id===id);if(o){o.del=true;o.u=Date.now();save(col)}};
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:NaN};
+const r1=n=>(Math.round(n*10)/10).toLocaleString('es-ES');
+const svP=()=>L(hprof).find(x=>x.id==='perfil')||null;
+const svWs=()=>L(wlog).slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+const svKg=()=>{const w=svWs();return w.length?w[w.length-1].kg:null};
+function svTargets(){
+  const P=svP(),kg=svKg();if(!P||!kg)return null;
+  const bmr=10*kg+6.25*P.h-5*P.age+(P.sex==='M'?5:-161);
+  const tdee=bmr*SV_ACT[P.act][1];
+  const lose=P.goal<kg-0.05;
+  const def=lose?Math.min(P.pace*7700/7,0.25*tdee):0;
+  const floor=P.sex==='M'?1500:1200;
+  const raw=tdee-def+(P.adj||0);
+  const kcal=Math.max(floor,Math.round(raw/10)*10);
+  const prot=Math.round(1.8*kg/5)*5,fat=Math.round(Math.max(0.8*kg,0.25*kcal/9)/5)*5;
+  const carb=Math.max(0,Math.round((kcal-prot*4-fat*9)/4/5)*5);
+  return {kg,bmr:Math.round(bmr),tdee:Math.round(tdee),def:Math.round(def),kcal,prot,fat,carb,water:Math.round(35*kg/100)*100,steps:P.steps||8000,lose,floored:raw<floor};
+}
+const svFoods=d=>L(flog).filter(f=>f.date===d);
+const svTot=d=>svFoods(d).reduce((a,f)=>({k:a.k+f.kcal,p:a.p+(f.p||0),c:a.c+(f.c||0),g:a.g+(f.g||0)}),{k:0,p:0,c:0,g:0});
+const svWat=d=>{const r=L(wat).find(x=>x.id==='a|'+d);return r?r.ml:0};
+const svSteps=d=>{const r=L(act).find(x=>x.id==='p|'+d);return r?r.n:0};
+const svEx=d=>L(act).filter(x=>x.kind==='ex'&&x.date===d);
+function svEma(ws){let e=null;return ws.map(w=>{e=e===null?w.kg:e+0.3*(w.kg-e);return e})}
+function svSlope(ws,P){
+  const since=addDays(iso(new Date()),-14),from=P&&P.adjDate&&P.adjDate>since?P.adjDate:since;
+  const pts=ws.filter(w=>w.date>=from);if(pts.length<3)return null;
+  const t0=fromISO(pts[0].date),xs=pts.map(w=>Math.round((fromISO(w.date)-t0)/864e5));
+  if(xs[xs.length-1]-xs[0]<7)return null;
+  const n=pts.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=pts.reduce((a,w)=>a+w.kg,0)/n;
+  let sxy=0,sxx=0;pts.forEach((w,i)=>{sxy+=(xs[i]-mx)*(w.kg-my);sxx+=(xs[i]-mx)**2});
+  return sxx?sxy/sxx:null;
+}
+const pct=(v,g)=>g>0?Math.max(0,Math.min(100,v/g*100)):0;
+const sbar=(v,g,cls)=>`<div class="sbar"><i class="${cls||''}" style="width:${pct(v,g)}%"></i></div>`;
+const mrow=(l,v,g,u,cls)=>`<div class="mrow"><div class="l"><span>${l}</span><span><b class="num">${Math.round(v)}</b> / ${g} ${u}</span></div>${sbar(v,g,cls)}</div>`;
+
+/* PIN */
+async function hashPin(p){
+  if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('pv-salud:'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  let h=2166136261;for(const c of 'pv-salud:'+p){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return 'f:'+(h>>>0).toString(16);
+}
+async function pinOk(p){
+  const h=await hashPin(p),cur=store.get('pv_pin','');
+  if(cur)return h===cur;
+  return h===PIN_DEF||p==='1901';
+}
+function svDots(bad){const d=$('#pdots');[...d.children].forEach((e,i)=>e.classList.toggle('f',i<SL.buf.length));d.classList.toggle('bad',!!bad)}
+$('#pad').innerHTML=['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k=>k?`<button type="button" data-pk="${k}">${k}</button>`:'<span></span>').join('');
+async function padKey(k){
+  if(SL.ok||SL.tab!=='s')return;
+  if(k==='⌫')SL.buf=SL.buf.slice(0,-1);else if(/^\d$/.test(k)&&SL.buf.length<4)SL.buf+=k;else return;
+  svDots();
+  if(SL.buf.length===4){
+    const p=SL.buf;SL.buf='';
+    if(await pinOk(p)){SL.ok=true;svDots();svGate()}
+    else{SL.buf=p;svDots(true);setTimeout(()=>{SL.buf='';svDots()},350)}
+  }
+}
+$('#pad').addEventListener('click',e=>{const b=e.target.closest("[data-pk]");if(b)padKey(b.dataset.pk)});
+document.addEventListener('keydown',e=>{if(SL.tab==='s'&&!SL.ok&&!e.ctrlKey&&!e.metaKey){if(/^\d$/.test(e.key)||e.key==='Backspace')padKey(e.key==='Backspace'?'⌫':e.key)}});
+function svLock(){SL.ok=false;SL.buf='';svChat=[];svDots();svGate()}
+function svGate(){
+  const on=SL.tab==='s';
+  $('#svLock').hidden=!on||SL.ok;$('#svMain').hidden=!on||!SL.ok;
+  if(on&&SL.ok)renderSalud();
+}
+function setTab(t){
+  SL.tab=t;$('.app').classList.toggle('sv',t==='s');
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  if(t!=='s'){SL.ok=false;SL.buf='';svChat=[]}
+  try{history.replaceState(null,'',t==='s'?'#salud':location.pathname+location.search)}catch(e){}
+  svDots();svGate();
+}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)});
+$('#svLockNow').onclick=svLock;
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&SL.tab==='s')svLock()});
+
+/* render */
+function renderSalud(){
+  if(SL.tab!=='s'||!SL.ok)return;
+  $('#svDayL').textContent=svDay===iso(new Date())?'Hoy · '+fmtShort(svDay):fmtLong(svDay);
+  $('#svNext').disabled=svDay>=iso(new Date());
+  svRenderSum();svRenderFoods();svRenderWeight();svRenderGoals();svRenderAct();svRenderChat();
+  $('#svWI').placeholder='kg ('+fmtShort(svDay)+')';
+}
+function svRenderSum(){
+  const P=svP(),T=svTargets(),el=$('#svSum');
+  if(!P||!T){el.innerHTML='<p class="mn" style="margin:0 0 10px">Configura tu perfil (edad, altura, peso y meta) para calcular tus objetivos.</p><button class="btn primary" id="svSetup" type="button">Configurar perfil</button>';return}
+  const t=svTot(svDay),left=T.kcal-t.k,w=svWat(svDay),s=svSteps(svDay);
+  el.innerHTML=`<div class="sbig num ${left<0?'over':''}">${left>=0?left:'+'+(-left)} <small>${left>=0?'kcal restantes':'kcal sobre el objetivo'}</small></div>
+    <div class="mn" style="margin:4px 0 8px">${Math.round(t.k)} de ${T.kcal} kcal</div>${sbar(t.k,T.kcal,left<0?'bad':'')}
+    ${mrow('Proteína',t.p,T.prot,'g','ok')}${mrow('Carbohidratos',t.c,T.carb,'g')}${mrow('Grasa',t.g,T.fat,'g','warn')}
+    <div class="mrow"><div class="l"><span>Agua</span><span><b class="num">${w}</b> / ${T.water} ml</span></div>${sbar(w,T.water)}
+      <div class="row" style="flex-wrap:wrap"><button class="btn" data-w="250" type="button">+250</button><button class="btn" data-w="500" type="button">+500</button><button class="btn ghost" data-w="-250" type="button">−250</button></div></div>
+    ${mrow('Pasos',s,T.steps,'','ok')}`;
+}
+function svRenderFoods(){
+  const fs=svFoods(svDay);let h='';
+  for(const [k,n] of SV_MEALS){
+    const g=fs.filter(f=>f.meal===k);if(!g.length)continue;
+    h+=`<div class="meal"><h4><span>${n}</span><span class="num">${Math.round(g.reduce((a,f)=>a+f.kcal,0))} kcal</span></h4>`+
+      g.map(f=>`<div class="fi"><div><div class="n">${esc(f.name)}</div><div class="m num">P ${r1(f.p||0)} · C ${r1(f.c||0)} · G ${r1(f.g||0)}</div></div><div class="k num">${Math.round(f.kcal)}</div><button class="btn ghost icon" data-fx="${esc(f.id)}" type="button" aria-label="Borrar">×</button></div>`).join('')+'</div>';
+  }
+  $('#svFoods').innerHTML=h||'<p class="mn" style="margin:0">Sin comidas registradas este día.</p>';
+  const seen=new Set(),rec=[];
+  for(const f of L(flog).slice().sort((a,b)=>(b.u||0)-(a.u||0))){const k=f.name.toLowerCase();if(seen.has(k))continue;seen.add(k);rec.push(f);if(rec.length>=8)break}
+  $('#svRec').innerHTML=rec.map(f=>`<button class="chip" type="button" data-rc="${esc(f.id)}">${esc(f.name)}</button>`).join('');
+}
+function svRenderWeight(){
+  const ws=svWs(),P=svP(),el=$('#svChart');
+  if(!ws.length){el.innerHTML='<p class="mn" style="margin:10px 0 0">Aún no hay pesos registrados.</p>';$('#svWStat').innerHTML='';$('#svWList').innerHTML='';return}
+  const em=svEma(ws),today=iso(new Date());
+  const from=svRange?addDays(today,-svRange):ws[0].date;
+  const idx=ws.map((w,i)=>i).filter(i=>ws[i].date>=from);
+  const pts=idx.map(i=>({d:ws[i].date,kg:ws[i].kg,e:em[i]}));
+  if(!pts.length){el.innerHTML='<p class="mn" style="margin:10px 0 0">Sin pesos en este rango.</p>'}
+  else{
+    const W=320,H=150,pl=30,pr=8,pt=8,pb=18;
+    const vals=pts.flatMap(p=>[p.kg,p.e]).concat(P?[P.goal]:[]);
+    let lo=Math.floor(Math.min(...vals)-1),hi=Math.ceil(Math.max(...vals)+1);if(hi-lo<3)hi=lo+3;
+    const t0=fromISO(pts[0].d).getTime(),t1=fromISO(pts[pts.length-1].d).getTime();
+    const X=d=>pts.length===1||t1===t0?(pl+W-pr)/2:pl+(fromISO(d).getTime()-t0)/(t1-t0)*(W-pl-pr);
+    const Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
+    let s=`<svg class="svs" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución del peso">`;
+    for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,y=Y(v);s+=`<line class="cg" x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}"/><text class="ct" x="${pl-4}" y="${y+3}" text-anchor="end">${Math.round(v*10)/10}</text>`}
+    if(P)s+=`<line class="cl" x1="${pl}" x2="${W-pr}" y1="${Y(P.goal)}" y2="${Y(P.goal)}"/>`;
+    s+=`<polyline class="ce" points="${pts.map(p=>X(p.d)+','+Y(p.e)).join(' ')}"/>`;
+    s+=pts.map(p=>`<circle class="cp" cx="${X(p.d)}" cy="${Y(p.kg)}" r="2.5"/>`).join('');
+    s+=`<text class="ct" x="${pl}" y="${H-4}">${fmtShort(pts[0].d)}</text><text class="ct" x="${W-pr}" y="${H-4}" text-anchor="end">${fmtShort(pts[pts.length-1].d)}</text></svg>`;
+    el.innerHTML=s;
+  }
+  const last=ws[ws.length-1],e=em[em.length-1],sl=svSlope(ws,P);
+  let eta='—';
+  if(P&&e<=P.goal)eta='¡Meta alcanzada!';
+  else if(P&&sl&&sl<0){const wk=(e-P.goal)/(-sl*7);eta=wk<1?'< 1 semana':'~'+Math.round(wk)+' sem.'}
+  $('#svWStat').innerHTML=`<div class="stat"><div>Último<b class="num">${r1(last.kg)} kg</b></div><div>Tendencia<b class="num">${r1(e)} kg</b></div><div>Ritmo<b class="num">${sl===null?'—':r1(sl*7)+' kg/sem'}</b></div><div>${P?'Meta '+r1(P.goal)+' kg':'Meta'}<b>${eta}</b></div></div>`;
+  $('#svWList').innerHTML=ws.slice(-4).reverse().map(w=>`<div class="fi" style="grid-template-columns:minmax(0,1fr) auto auto"><span class="mn">${fmtShort(w.date)}</span><span class="num">${r1(w.kg)} kg</span><button class="btn ghost icon" data-wx="${esc(w.id)}" type="button" aria-label="Borrar">×</button></div>`).join('');
+}
+function svAdvice(T,P){
+  if(!T||!P||!T.lose)return '';
+  const sl=svSlope(svWs(),P);if(sl===null)return '';
+  const rate=-sl*7,kg=T.kg;
+  if(rate<0.4*P.pace&&(P.adj||0)>-300)return {d:-150,t:`Bajas ${r1(Math.max(rate,0))} kg/sem, menos de lo previsto (${P.pace}). Opciones: −150 kcal/día o +2000 pasos/día.`};
+  if(rate>1.3*P.pace&&rate/kg*100>0.8&&(P.adj||0)<300)return {d:150,t:`Bajas ${r1(rate)} kg/sem, más rápido de lo previsto. Conviene +150 kcal/día para conservar músculo.`};
+  return '';
+}
+function svRenderGoals(){
+  const P=svP(),T=svTargets(),el=$('#svGoals');
+  if(!P||!T){el.innerHTML='<p class="mn" style="margin:0">Configura el perfil para ver tus objetivos.</p>';return}
+  const adv=svAdvice(T,P);
+  el.innerHTML=`<div class="sgl"><div>Calorías<b class="num">${T.kcal} kcal</b></div><div>Proteína<b class="num">${T.prot} g</b></div><div>Carbohidratos<b class="num">${T.carb} g</b></div><div>Grasa<b class="num">${T.fat} g</b></div><div>Agua<b class="num">${T.water} ml</b></div><div>Pasos<b class="num">${T.steps}</b></div></div>
+    <p class="mn" style="margin:10px 0 0">Metabolismo basal ${T.bmr} kcal · gasto diario ${T.tdee} kcal${T.lose?` · déficit ${T.def} kcal`:''}${P.adj?` · ajuste ${P.adj>0?'+':''}${P.adj} kcal`:''}${T.floored?' · mínimo de seguridad aplicado':''}.</p>
+    ${!T.lose?'<p class="mn" style="margin:6px 0 0">Tu peso ya está en la meta o por debajo: objetivo de mantenimiento.</p>':''}
+    ${adv?`<div class="sadv">${esc(adv.t)}<div class="row" style="margin-top:6px"><button class="btn" id="svApply" data-d="${adv.d}" type="button">Aplicar ${adv.d>0?'+':''}${adv.d} kcal</button></div></div>`:''}
+    ${P.adj?'<div style="margin-top:8px"><button class="btn ghost" id="svAdjReset" type="button">Quitar ajuste</button></div>':''}`;
+}
+function svRenderAct(){
+  const ex=svEx(svDay),T=svTargets(),today=iso(new Date());
+  $('#svSI').value=svSteps(svDay)||'';
+  let ws=0,wm=0,wk=0;
+  for(let i=0;i<7;i++){const d=addDays(today,-i);ws+=svSteps(d);for(const x of svEx(d)){wm+=x.min;wk+=x.kcal||0}}
+  $('#svAct').innerHTML=(ex.length?ex.map(x=>`<div class="fi"><div><div class="n">${esc(x.type)}</div><div class="m num">${x.min} min</div></div><div class="k num">${Math.round(x.kcal||0)} kcal</div><button class="btn ghost icon" data-ex="${esc(x.id)}" type="button" aria-label="Borrar">×</button></div>`).join(''):'<p class="mn" style="margin:10px 0 0">Sin ejercicio este día.</p>')+
+    `<p class="mn" style="margin:10px 0 0">Últimos 7 días: ${Math.round(ws/7).toLocaleString('es-ES')} pasos/día de media · ${wm} min de ejercicio · ~${Math.round(wk)} kcal.</p>`;
+}
+function svRenderChat(){
+  const c=$('#svChat');
+  c.innerHTML=svChat.map(m=>`<div class="msg ${m.r}">${fmtMsg(m.t)}</div>`).join('');
+  c.scrollTop=c.scrollHeight;
+  $('#svQuick').innerHTML=svChat.length?'':SV_Q.map((q,i)=>`<button class="chip" type="button" data-q="${i}">${esc(q[0])}</button>`).join('');
+}
+const fmtMsg=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+
+/* eventos */
+const dlgOpen=d=>{if(d.showModal)d.showModal();else d.setAttribute('open','')};
+$('#svPrev').onclick=()=>{svDay=addDays(svDay,-1);renderSalud()};
+$('#svNext').onclick=()=>{if(svDay<iso(new Date())){svDay=addDays(svDay,1);renderSalud()}};
+$('#svToday').onclick=()=>{svDay=iso(new Date());renderSalud()};
+$('#svRange').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b)return;svRange=+b.dataset.r;document.querySelectorAll('#svRange button').forEach(x=>x.classList.toggle('on',x===b));svRenderWeight()});
+function arm(b,fn){
+  if(b.dataset.armed){fn();return}
+  b.dataset.armed='1';b.classList.add('arm');b.textContent='¿Borrar?';
+  setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.classList.remove('arm');b.textContent='×'}},3000);
+}
+$('#salud').addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.id==='svSetup')return openProfile();
+  if(t.dataset.w){const ml=Math.max(0,svWat(svDay)+ +t.dataset.w);put(wat,'wat',{id:'a|'+svDay,date:svDay,ml});return renderSalud()}
+  if(t.dataset.fx)return arm(t,()=>{rmv(flog,'flog',t.dataset.fx);renderSalud()});
+  if(t.dataset.wx)return arm(t,()=>{rmv(wlog,'wlog',t.dataset.wx);renderSalud()});
+  if(t.dataset.ex)return arm(t,()=>{rmv(act,'act',t.dataset.ex);renderSalud()});
+  if(t.dataset.rc){const f=flog.find(x=>x.id===t.dataset.rc);if(f)openFood(f);return}
+  if(t.dataset.q){const q=SV_Q[+t.dataset.q];return chatSend(q[1])}
+  if(t.id==='svApply'){const P={...svP()};P.adj=(P.adj||0)+(+t.dataset.d);P.adjDate=iso(new Date());put(hprof,'hprof',P);return renderSalud()}
+  if(t.id==='svAdjReset'){const P={...svP()};P.adj=0;P.adjDate=iso(new Date());put(hprof,'hprof',P);return renderSalud()}
+});
+$('#svWF').addEventListener('submit',e=>{
+  e.preventDefault();const kg=num($('#svWI').value);
+  if(!(kg>=30&&kg<=300))return toast('Peso no válido');
+  put(wlog,'wlog',{id:'w|'+svDay,date:svDay,kg:Math.round(kg*10)/10});$('#svWI').value='';renderSalud();toast('Peso guardado');
+});
+$('#svSF').addEventListener('submit',e=>{
+  e.preventDefault();const n=num($('#svSI').value);
+  if(!(n>=0&&n<=100000))return toast('Pasos no válidos');
+  put(act,'act',{id:'p|'+svDay,kind:'steps',date:svDay,n:Math.round(n)});renderSalud();toast('Pasos guardados');
+});
+
+/* comida manual */
+const dzF=$('#dzF');
+$('#zfM').innerHTML=$('#zaM').innerHTML=SV_MEALS.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('');
+function defMeal(){const h=new Date().getHours();return h<11?'des':h<16?'com':h<19?'mer':'cen'}
+function openFood(f){
+  $('#zfM').value=f?f.meal:defMeal();$('#zfN').value=f?f.name:'';$('#zfK').value=f?f.kcal:'';
+  $('#zfP').value=f&&f.p?f.p:'';$('#zfC').value=f&&f.c?f.c:'';$('#zfG').value=f&&f.g?f.g:'';dlgOpen(dzF);
+}
+$('#svAddF').onclick=()=>openFood(null);
+$('#zfX').onclick=()=>dzF.close();
+$('#zfForm').addEventListener('submit',e=>{
+  e.preventDefault();const k=num($('#zfK').value);if(!(k>=0))return;
+  const o=v=>{const n=num(v);return isFinite(n)&&n>0?Math.round(n*10)/10:0};
+  put(flog,'flog',{id:uid('f'),date:svDay,meal:$('#zfM').value,name:$('#zfN').value.trim().slice(0,80),kcal:Math.round(k),p:o($('#zfP').value),c:o($('#zfC').value),g:o($('#zfG').value)});
+  dzF.close();renderSalud();
+});
+
+/* ejercicio */
+const dzE=$('#dzE');
+$('#zeT').innerHTML=Object.keys(SV_MET).map(k=>`<option>${k}</option>`).join('');
+function exKcal(){const kg=svKg(),m=num($('#zeM').value);if(kg&&m>0)$('#zeK').value=Math.round(SV_MET[$('#zeT').value]*kg*m/60)}
+$('#zeT').onchange=$('#zeM').oninput=exKcal;
+$('#svAddE').onclick=()=>{$('#zeT').value='Caminar';$('#zeM').value=30;exKcal();dlgOpen(dzE)};
+$('#zeX').onclick=()=>dzE.close();
+$('#zeForm').addEventListener('submit',e=>{
+  e.preventDefault();const m=num($('#zeM').value),k=num($('#zeK').value);if(!(m>0))return;
+  put(act,'act',{id:uid('e'),kind:'ex',date:svDay,type:$('#zeT').value,min:Math.round(m),kcal:isFinite(k)?Math.round(k):0});
+  dzE.close();renderSalud();
+});
+
+/* perfil */
+const dzP=$('#dzP');
+$('#zpC').innerHTML=Object.entries(SV_ACT).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join('');
+function openProfile(){
+  const P=svP()||{};
+  $('#zpS').value=P.sex||'M';$('#zpA').value=P.age||'';$('#zpH').value=P.h||'';$('#zpW').value=svKg()||'';$('#zpG').value=P.goal||'';
+  $('#zpP').value=P.steps||8000;$('#zpC').value=P.act||'lig';$('#zpR').value=String(P.pace||0.5);$('#zpD').value=P.dis||'';$('#zpE').textContent='';dlgOpen(dzP);
+}
+$('#svBP').onclick=openProfile;
+$('#zpX').onclick=()=>dzP.close();
+$('#zpForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const age=num($('#zpA').value),h=num($('#zpH').value),goal=num($('#zpG').value),wv=$('#zpW').value.trim(),w=wv?num(wv):svKg(),err=m=>{$('#zpE').textContent=m};
+  if(!(age>=18&&age<=100))return err('La edad debe estar entre 18 y 100.');
+  if(!(h>=120&&h<=230))return err('Altura entre 120 y 230 cm.');
+  if(!(w>=30&&w<=300))return err('Indica tu peso actual (30–300 kg).');
+  if(!(goal>=30&&goal<=300))return err('Peso meta no válido.');
+  if(goal/((h/100)**2)<18.5)return err('Esa meta da un IMC inferior a 18,5 (bajo peso). Elige una meta mayor.');
+  const old=svP()||{};
+  put(hprof,'hprof',{id:'perfil',sex:$('#zpS').value,age:Math.round(age),h:Math.round(h),goal:Math.round(goal*10)/10,act:$('#zpC').value,pace:+$('#zpR').value,steps:Math.round(num($('#zpP').value)||8000),dis:$('#zpD').value.trim().slice(0,120),adj:old.adj||0,adjDate:old.adjDate||''});
+  if(wv)put(wlog,'wlog',{id:'w|'+svDay,date:svDay,kg:Math.round(w*10)/10});
+  dzP.close();renderSalud();
+});
+
+/* PIN nuevo */
+const dzN=$('#dzN');
+$('#svBN').onclick=()=>{$('#znP').value='';dlgOpen(dzN)};
+$('#znX').onclick=()=>dzN.close();
+$('#znForm').addEventListener('submit',async e=>{
+  e.preventDefault();const p=$('#znP').value;if(!/^\d{4}$/.test(p))return;
+  store.set('pv_pin',await hashPin(p));dzN.close();toast('PIN cambiado en este dispositivo');
+});
+
+/* IA */
+const dzK=$('#dzK');
+$('#svBK').onclick=()=>{$('#zkK').value=store.get('pv_gkey','');$('#zkM').value=store.get('pv_gmodel','');dlgOpen(dzK)};
+$('#zkX').onclick=()=>dzK.close();
+$('#zkD').onclick=()=>{store.set('pv_gkey','');dzK.close();toast('Clave borrada')};
+$('#zkForm').addEventListener('submit',e=>{e.preventDefault();store.set('pv_gkey',$('#zkK').value.trim());store.set('pv_gmodel',$('#zkM').value.trim());dzK.close();toast('Guardado')});
+async function gemini(system,contents,json){
+  const key=store.get('pv_gkey','');if(!key)throw {code:'nokey'};
+  const model=store.get('pv_gmodel','')||'gemini-flash-latest';
+  const body={systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}};
+  let r;
+  try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body)})}
+  catch(e){throw {code:'net'}}
+  if(!r.ok)throw {code:r.status};
+  const j=await r.json();
+  const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
+  if(!t)throw {code:'empty'};return t;
+}
+function gErr(e){
+  const c=e&&e.code;
+  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404?'Modelo no encontrado: cambia el nombre en Clave de IA.':c===429?'Límite gratuito alcanzado. Espera un poco.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
+}
+const dzA=$('#dzA');
+$('#svAddAI').onclick=()=>{svAI=null;$('#zaM').value=defMeal();$('#zaT').value='';$('#zaR').innerHTML='';$('#zaOk').disabled=true;dlgOpen(dzA)};
+$('#zaX').onclick=()=>dzA.close();
+$('#zaGo').onclick=async()=>{
+  const t=$('#zaT').value.trim();if(!t||svBusy)return;
+  svBusy=true;$('#zaR').innerHTML='<p class="mn">Estimando…</p>';$('#zaOk').disabled=true;svAI=null;
+  try{
+    const txt=await gemini('Eres un nutricionista. El usuario describe lo que ha comido. Devuelve SOLO un array JSON de objetos {"nombre":string,"kcal":number,"proteina":number,"carbos":number,"grasa":number} con una estimación por alimento o plato, según las cantidades indicadas (si no hay cantidad, una ración normal en España). Números enteros.',[{role:'user',parts:[{text:t}]}],true);
+    let a=JSON.parse(txt.replace(/^```(?:json)?|```$/g,'').trim());if(!Array.isArray(a))a=[a];
+    a=a.map(x=>({name:String(x.nombre||'').slice(0,80),kcal:Math.round(+x.kcal),p:Math.round(+x.proteina||0),c:Math.round(+x.carbos||0),g:Math.round(+x.grasa||0)})).filter(x=>x.name&&isFinite(x.kcal)&&x.kcal>=0&&x.kcal<=5000);
+    if(!a.length)throw {code:'empty'};
+    svAI=a;
+    $('#zaR').innerHTML=a.map(x=>`<div class="airow"><span>${esc(x.name)}</span><b class="num">${x.kcal} kcal</b><span class="mn num" style="grid-column:1/-1">P ${x.p} · C ${x.c} · G ${x.g}</span></div>`).join('')+'<p class="mn" style="margin:6px 0 0">Estimación aproximada.</p>';
+    $('#zaOk').disabled=false;
+  }catch(er){$('#zaR').innerHTML=`<p class="mn" style="color:var(--bad)">${esc(er instanceof SyntaxError?'Respuesta no válida, reintenta.':gErr(er))}</p>`}
+  svBusy=false;
+};
+$('#zaForm').addEventListener('submit',e=>{
+  e.preventDefault();if(!svAI)return;
+  for(const x of svAI)put(flog,'flog',{id:uid('f'),date:svDay,meal:$('#zaM').value,name:x.name,kcal:x.kcal,p:x.p,c:x.c,g:x.g});
+  svAI=null;dzA.close();renderSalud();
+});
+
+/* chat */
+const SV_Q=[['Cena con lo que me queda','Propón una cena que encaje con las kcal y macros que me quedan hoy.'],['Revisa mi semana','Revisa mi semana (peso, comidas, actividad). ¿Qué debería ajustar?'],['Menú de mañana','Hazme un menú para mañana (desayuno, comida, merienda, cena) ajustado a mis objetivos.'],['Rutina de fuerza','Propón una rutina de fuerza de 3 días por semana para volver al gimnasio.']];
+function svCtx(){
+  const P=svP(),T=svTargets(),today=iso(new Date()),t=svTot(svDay),ws=svWs(),days=[];
+  for(let i=1;i<=7;i++){const d=addDays(today,-i),x=svTot(d);if(x.k)days.push(x.k)}
+  const sl=svSlope(ws,P);
+  return JSON.stringify({sexo:P&&P.sex,edad:P&&P.age,altura_cm:P&&P.h,peso_kg:T&&T.kg,peso_meta_kg:P&&P.goal,no_le_gustan:P&&P.dis||undefined,
+    objetivos_diarios:T&&{kcal:T.kcal,proteina_g:T.prot,carbos_g:T.carb,grasa_g:T.fat,agua_ml:T.water,pasos:T.steps},
+    dia:svDay,consumido:{kcal:Math.round(t.k),proteina_g:Math.round(t.p),carbos_g:Math.round(t.c),grasa_g:Math.round(t.g)},
+    comidas:svFoods(svDay).map(f=>({comida:f.meal,nombre:f.name,kcal:f.kcal})),agua_ml:svWat(svDay),pasos:svSteps(svDay),ejercicio:svEx(svDay).map(x=>({tipo:x.type,min:x.min})),
+    media_kcal_7d:days.length?Math.round(days.reduce((a,b)=>a+b,0)/days.length):null,ritmo_kg_semana:sl===null?null:Math.round(sl*70)/10,pesos_recientes:ws.slice(-6).map(w=>[w.date,w.kg])});
+}
+const SV_SYS='Eres el asistente de nutrición y ejercicio de una app personal. Responde en español, conciso (unas 150 palabras salvo que pidan un plan), práctico y con cifras. Usa los objetivos diarios y los datos del CONTEXTO; no inventes datos que no estén. No diagnostiques ni sustituyas a un profesional sanitario; ante algo médico, recomienda consultarlo. Prefiere alimentos comunes en España. Si el contexto indica alimentos que no le gustan, no los propongas; intégralos o evítalos. Usa **negrita** solo para cifras clave.';
+async function chatSend(text){
+  text=(text||'').trim();if(!text||svBusy)return;
+  if(!svP()){svChat.push({r:'e',t:'Configura primero tu perfil.'});return svRenderChat()}
+  svBusy=true;svChat.push({r:'u',t:text});svChat.push({r:'a',t:'…'});svRenderChat();
+  try{
+    const hist=svChat.slice(0,-2).slice(-10).map(m=>({role:m.r==='u'?'user':'model',parts:[{text:m.t}]})).filter(m=>m.parts[0].text);
+    const out=await gemini(SV_SYS,[...hist,{role:'user',parts:[{text:'CONTEXTO (JSON): '+svCtx()+'\n\nPREGUNTA: '+text}]}],false);
+    svChat[svChat.length-1]={r:'a',t:out.trim()};
+  }catch(er){svChat[svChat.length-1]={r:'e',t:gErr(er)}}
+  svBusy=false;svRenderChat();
+}
+$('#svChatF').addEventListener('submit',e=>{e.preventDefault();const i=$('#svChatI'),v=i.value;i.value='';chatSend(v)});
+$('#svChatClr').onclick=()=>{svChat=[];svRenderChat()};
+if(location.hash==='#salud')setTab('s');
+
 /* ---------- arranque ---------- */
-function renderAll(){renderDay();renderWeek();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo()}
+function renderAll(){renderDay();renderWeek();renderBus();renderCal();renderTasks();renderExams();renderHabits();renderStudy();renderPomo();renderSalud()}
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 tickHeader();renderAll();loadWx(false);
 $('#inSub').textContent=$('#hello').textContent;
