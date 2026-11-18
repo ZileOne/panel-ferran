@@ -1567,22 +1567,25 @@ async function gemini(system,contents,json){
     }
     note(m,r.status);
     if(r.status===404){bad.add(m);store.set('pv_gbad',[...bad])}
-    if(r.status===400||r.status===401||r.status===403||r.status===429)throw {code:r.status,log};
+    if(r.status===400||r.status===401||r.status===403)throw {code:r.status,log};
     return null;
   }
+  const tried=new Set();
   const cand=[store.get('pv_gmodel',''),store.get('pv_gauto',''),'gemini-flash-latest','gemini-2.5-flash'].filter((m,i,a)=>m&&a.indexOf(m)===i&&!bad.has(m));
   for(const m of cand){
     if(calls>=3)break;
-    let x=await one(m);if(x)return x;
+    tried.add(m);let x=await one(m);if(x)return x;
     if(worst&&worst.code===503&&calls<3){await new Promise(z=>setTimeout(z,1500));x=await one(m);if(x)return x}
   }
-  if(!worst||worst.code===404){
+  if(!worst||worst.code===404||worst.code===429){
     let names=[];
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:H});
       if(r.ok){const j=await r.json();names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/^gemini-/.test(n)&&!/image|tts|live|audio|embed|vision|robotics|computer|omni|preview|exp/.test(n)&&!bad.has(n))}
     }catch(e){}
-    names.sort((a,b)=>(/flash/.test(b)-/flash/.test(a))||(/lite/.test(a)-/lite/.test(b)));
+    const ver=n=>parseFloat((n.match(/(\d+(?:\.\d+)?)/)||[0,0])[1]);
+    names=names.filter(n=>!tried.has(n));
+    names.sort((a,b)=>(/flash/.test(b)-/flash/.test(a))||(/lite/.test(a)-/lite/.test(b))||ver(b)-ver(a));
     for(const m of names.slice(0,2)){const x=await one(m);if(x)return x}
     if(!worst||worst.code===404)throw {code:'nomodel',names:names.slice(0,6),log};
   }
