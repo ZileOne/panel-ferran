@@ -1549,44 +1549,41 @@ $('#zkD').onclick=()=>{store.set('pv_gkey','');dzK.close();toast('Clave borrada'
 $('#zkForm').addEventListener('submit',e=>{e.preventDefault();store.set('pv_gkey',$('#zkK').value.trim());store.set('pv_gmodel',$('#zkM').value.trim());dzK.close();toast('Guardado')});
 async function gemini(system,contents,json){
   const key=store.get('pv_gkey','');if(!key)throw {code:'nokey'};
-  const pref=store.get('pv_gmodel','')||store.get('pv_gauto','')||'gemini-flash-latest';
   const body=JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}});
   const H={'Content-Type':'application/json','x-goog-api-key':key};
-  let worst=null;const log=[];let cur='';
-  const note=c=>{log.push(cur+':'+c);if(!worst||worst.code===404)worst={code:c}};
-  async function tryModel(m){
-    cur=m;
-    for(let t=0;t<2;t++){
-      const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);let r;
-      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:'POST',headers:H,body,signal:ac.signal})}
-      catch(e){clearTimeout(tm);note(e&&e.name==='AbortError'?'timeout':'net');return null}
-      clearTimeout(tm);
-      if(r.ok){
-        const j=await r.json();
-        const x=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
-        if(x){store.set('pv_gauto',m);return x}note('empty');return null;
-      }
-      note(r.status);
-      if(r.status===400||r.status===401||r.status===403)throw {code:r.status};
-      if(r.status===503||r.status===500||r.status===429){await new Promise(z=>setTimeout(z,1200));continue}
-      return null;
+  const bad=new Set(store.get('pv_gbad',[])),log=[];
+  let worst=null,calls=0;
+  const note=(m,c)=>{log.push(m+':'+c);if(!worst||worst.code===404)worst={code:c}};
+  async function one(m){
+    calls++;
+    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);let r;
+    try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:'POST',headers:H,body,signal:ac.signal})}
+    catch(e){clearTimeout(tm);note(m,e&&e.name==='AbortError'?'timeout':'net');return null}
+    clearTimeout(tm);
+    if(r.ok){
+      const j=await r.json();
+      const x=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
+      if(x){store.set('pv_gauto',m);return x}note(m,'empty');return null;
     }
+    note(m,r.status);
+    if(r.status===404){bad.add(m);store.set('pv_gbad',[...bad])}
+    if(r.status===400||r.status===401||r.status===403||r.status===429)throw {code:r.status,log};
     return null;
   }
-  const tried=new Set();
-  for(const m of [pref,'gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite']){
-    if(tried.has(m))continue;tried.add(m);
-    const x=await tryModel(m);if(x)return x;
+  const cand=[store.get('pv_gmodel',''),store.get('pv_gauto',''),'gemini-flash-latest','gemini-2.5-flash'].filter((m,i,a)=>m&&a.indexOf(m)===i&&!bad.has(m));
+  for(const m of cand){
+    if(calls>=3)break;
+    let x=await one(m);if(x)return x;
+    if(worst&&worst.code===503&&calls<3){await new Promise(z=>setTimeout(z,1500));x=await one(m);if(x)return x}
   }
-  {
+  if(!worst||worst.code===404){
     let names=[];
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:H});
-      if(r.ok){const j=await r.json();names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/^gemini-/.test(n)&&!/image|tts|live|audio|embed|vision|robotics|computer/.test(n))}
+      if(r.ok){const j=await r.json();names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/^gemini-/.test(n)&&!/image|tts|live|audio|embed|vision|robotics|computer|omni|preview|exp/.test(n)&&!bad.has(n))}
     }catch(e){}
     names.sort((a,b)=>(/flash/.test(b)-/flash/.test(a))||(/lite/.test(a)-/lite/.test(b)));
-    names.sort((a,b)=>(/preview|exp/.test(a)-/preview|exp/.test(b)));
-    for(const m of names.slice(0,6)){if(tried.has(m))continue;tried.add(m);const x=await tryModel(m);if(x)return x}
+    for(const m of names.slice(0,2)){const x=await one(m);if(x)return x}
     if(!worst||worst.code===404)throw {code:'nomodel',names:names.slice(0,6),log};
   }
   throw {...worst,log};
