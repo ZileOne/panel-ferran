@@ -1552,9 +1552,10 @@ async function gemini(system,contents,json){
   const pref=store.get('pv_gmodel','')||store.get('pv_gauto','')||'gemini-flash-latest';
   const body=JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.4,...(json?{responseMimeType:'application/json'}:{})}});
   const H={'Content-Type':'application/json','x-goog-api-key':key};
-  let worst=null;
-  const note=c=>{if(!worst||worst.code===404)worst={code:c}};
+  let worst=null;const log=[];let cur='';
+  const note=c=>{log.push(cur+':'+c);if(!worst||worst.code===404)worst={code:c}};
   async function tryModel(m){
+    cur=m;
     for(let t=0;t<2;t++){
       const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),15000);let r;
       try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:'POST',headers:H,body,signal:ac.signal})}
@@ -1577,21 +1578,22 @@ async function gemini(system,contents,json){
     if(tried.has(m))continue;tried.add(m);
     const x=await tryModel(m);if(x)return x;
   }
-  if(!worst||worst.code===404){
+  {
     let names=[];
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:H});
       if(r.ok){const j=await r.json();names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,'')).filter(n=>/^gemini-/.test(n)&&!/image|tts|live|audio|embed|vision|robotics|computer/.test(n))}
     }catch(e){}
     names.sort((a,b)=>(/flash/.test(b)-/flash/.test(a))||(/lite/.test(a)-/lite/.test(b)));
-    for(const m of names.slice(0,5)){if(tried.has(m))continue;tried.add(m);const x=await tryModel(m);if(x)return x}
-    if(!worst||worst.code===404)throw {code:'nomodel',names:names.slice(0,6)};
+    names.sort((a,b)=>(/preview|exp/.test(a)-/preview|exp/.test(b)));
+    for(const m of names.slice(0,6)){if(tried.has(m))continue;tried.add(m);const x=await tryModel(m);if(x)return x}
+    if(!worst||worst.code===404)throw {code:'nomodel',names:names.slice(0,6),log};
   }
-  throw worst;
+  throw {...worst,log};
 }
 function gErr(e){
   const c=e&&e.code;
-  return c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404||c==='nomodel'?'Ningún modelo disponible con tu clave'+(e.names&&e.names.length?'. Modelos que ve tu clave: '+e.names.join(', ')+'. Escribe uno en Clave de IA.':'. Comprueba que la clave es de Google AI Studio.'):c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='timeout'?'La IA no responde (tiempo agotado). Reintenta.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.';
+  return (c==='nokey'?'Falta la clave de IA (Ajustes → Clave de IA).':c===400?'Clave no válida o petición rechazada.':c===403?'Clave sin permiso para este modelo.':c===404||c==='nomodel'?'Ningún modelo disponible con tu clave'+(e.names&&e.names.length?'. Modelos que ve tu clave: '+e.names.join(', ')+'. Escribe uno en Clave de IA.':'. Comprueba que la clave es de Google AI Studio.'):c===429?'Límite gratuito alcanzado. Espera un poco.':c===503?'Google está saturado ahora mismo. Reintenta en un minuto.':c==='timeout'?'La IA no responde (tiempo agotado). Reintenta.':c==='net'?'Sin conexión con la IA.':c==='empty'?'La IA no devolvió respuesta.':'Error de la IA'+(c?' ('+c+')':'')+'.').concat(e&&e.log&&e.log.length?' ['+e.log.join(' · ')+']':'');
 }
 const dzA=$('#dzA');
 $('#svAddAI').onclick=()=>{svAI=null;$('#zaM').value=defMeal();$('#zaT').value='';$('#zaR').innerHTML='';$('#zaOk').disabled=true;dlgOpen(dzA)};
